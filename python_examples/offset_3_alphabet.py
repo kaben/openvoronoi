@@ -283,6 +283,7 @@ def modify_segments(segs):
         last = seg[ len(seg)-1 ]
         assert( first[0]==last[0] and first[1]==last[1] )
         seg.pop()
+        seg.reverse() # switch interior/exterior
         segs_mod.append(seg)
         #drawSegment(myscreen, seg)
     return segs_mod
@@ -367,11 +368,14 @@ if __name__ == "__main__":
     #print "all sites inserted. "
     #print "VD check: ", vd.check()
     
+    pi = ovd.PolygonInterior( vd.getGraph() )
+    pi.str()
+    
     of = ovd.Offset( vd.getGraph() ) # pass the created graph to the Offset class
     of.str()
     ofs_list=[]
     t_before = time.time()
-    for t in [0.003*x for x in range(1,20)]:
+    for t in [0.0003*x for x in range(1,20)]:
         ofs = of.offset(t)
         ofs_list.append(ofs)
     

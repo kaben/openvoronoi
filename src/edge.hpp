@@ -56,9 +56,9 @@ enum VoronoiEdgeType {LINE, LINELINE, PARA_LINELINE, OUTEDGE, PARABOLA, ELLIPSE,
 class EdgeProps {
 public:
     EdgeProps();
-    EdgeProps(HEEdge n, HEFace f): next(n), face(f), has_null_face(false) {}
+    EdgeProps(HEEdge n, HEFace f): next(n), face(f), has_null_face(false), valid(true) {}
     /// create edge with given next, twin, and face
-    EdgeProps(HEEdge n, HEEdge t, HEFace f): next(n), twin(t), face(f), has_null_face(false) {}
+    EdgeProps(HEEdge n, HEEdge t, HEFace f): next(n), twin(t), face(f), has_null_face(false), valid(true) {}
     /// the next edge, counterclockwise, from this edge
     HEEdge next; 
     /// the twin edge
@@ -82,6 +82,8 @@ public:
     void set_parameters(Site* s1, Site* s2, bool sig);
     void set_sep_parameters(Point& endp, Point& p);
     EdgeProps &operator=(const EdgeProps &p);
+    bool valid; // for filtering graph
+    bool inserted_direction; // true if linesite-edge inserted in this direction
 private:
     Point projection_point(Solution& sl) const;
     double minimum_pp_t(Site* s1, Site* s2);

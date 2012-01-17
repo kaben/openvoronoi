@@ -34,7 +34,6 @@ namespace ovd
 class VoronoiDiagramChecker;
 class FaceGrid;
 
-
 // in augment_vertex_set() we grow the delete-tree by processing vertices
 // one-by-one from a priority_queue. This is the priority_queue sort predicate.
 // We handle vertices with a large fabs( in_circle() ) first, since we 
@@ -63,8 +62,6 @@ struct EdgeData {
     HEFace f;
 };
 
-
-
 /// \brief Voronoi diagram.
 ///
 /// see http://en.wikipedia.org/wiki/Voronoi_diagram
@@ -76,7 +73,6 @@ struct EdgeData {
 class VoronoiDiagram {
     public:
         /// ctor
-        VoronoiDiagram() {}
         /// create diagram with given far-radius and number of bins
         /// \param far radius of circle centered at (0,0) within which all sites must lie
         /// \param n_bins number of bins used for nearest vd-vertex bucket-search
@@ -100,9 +96,6 @@ class VoronoiDiagram {
         /// string repr
         std::string print() const;
         std::string version() const { return VERSION_STRING; }
-        friend class VoronoiDiagramChecker;
-        friend class VertexPositioner;
-        friend class SplitPointError;
         static void reset_vertex_count() { VoronoiVertex::reset_count(); }
         void debug_on() {debug=true;}
         bool check();
@@ -138,7 +131,6 @@ class VoronoiDiagram {
         boost::tuple<HEVertex,HEFace,HEVertex,HEVertex,HEFace>
             find_null_face(HEVertex start, HEVertex other, Point l);
         boost::tuple<HEEdge,HEVertex,HEEdge,bool> find_separator_target(HEFace f, HEVertex endp);
-        std::pair<HEEdge,HEEdge> find_next_prev(HEFace null_face, HEVertex endp);
 
         std::pair<HEVertex,HEFace> process_null_edge(Point dir, HEEdge next_edge , bool k3, bool next_prev);
         HEVertex add_separator_point(HEVertex endp, HEEdge edge, Point sep_dir);
@@ -151,12 +143,6 @@ class VoronoiDiagram {
         void remove_split_vertex(HEFace f);
         void reset_status();
         int num_new_vertices(HEFace f);
-    // PRINT ETC
-        void print_faces();
-        void print_face(HEFace f);
-        void print_vertices(VertexVector& q);
-        void print_edges(EdgeVector& q);
-        void print_edge(HEEdge e);
     // HELPER-CLASSES
         /// sanity-checks on the diagram are done by this helper class
         VoronoiDiagramChecker* vd_checker;
@@ -167,7 +153,6 @@ class VoronoiDiagram {
     // DATA
         /// the half-edge diagram of the vd
         HEGraph g;
-        //typedef HEGraph::face_edge_iterator FaceEdItr;
         /// the voronoi diagram is constructed for sites within a circle with radius far_radius
         double far_radius;
         /// the number of point sites
@@ -185,6 +170,8 @@ class VoronoiDiagram {
         VertexQueue vertexQueue; 
         std::map<int,HEVertex> vertex_map;
         bool debug;
+private:
+        VoronoiDiagram(); // don't use.
 
 };
 
@@ -192,14 +179,14 @@ class VoronoiDiagram {
 // to locate split-points
 class SplitPointError {
 public:
-    SplitPointError(VoronoiDiagram* v, HEEdge split_edge,Point pt1, Point pt2) :
-    vd(v), edge(split_edge), p1(pt1), p2(pt2)
+    SplitPointError(HEGraph& gi, HEEdge split_edge, Point pt1, Point pt2) :
+    g(gi),  edge(split_edge), p1(pt1), p2(pt2)
     {}
     
     // find point on edge at t-value
     // compute a signed distance to the pt1-pt2 line
     double operator()(const double t) {
-        Point p = vd->g[edge].point(t);
+        Point p = g[edge].point(t);
         // line: pt1 + u*(pt2-pt1) = p
         //   (p-pt1) dot (pt2-pt1) = u* (pt2-pt1) dot (pt2-pt1)
         
@@ -215,7 +202,7 @@ public:
         return sign*dist;
     }
 private:
-    VoronoiDiagram* vd;
+    HEGraph& g;
     HEEdge edge;
     Point p1;
     Point p2;
