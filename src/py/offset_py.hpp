@@ -42,7 +42,7 @@ public:
     boost::python::list offset_py(double t) {
         offset(t);
         boost::python::list py_offsets;
-        BOOST_FOREACH( Loop loop, offset_list2 ) { // loop through each loop
+        BOOST_FOREACH( Loop loop, offset_list ) { // loop through each loop
             boost::python::list py_loop;
             bool first = true;
             BOOST_FOREACH( Lpt lpt, loop ) { // loop through each line/arc

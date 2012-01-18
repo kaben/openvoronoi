@@ -35,8 +35,8 @@ namespace ovd
 /// \brief Line-point or arc-point component of a curve.
 struct Lpt {
   Point p;
-  // an arc-point is indicated by positive radius, in which case c and cw are used.
-  // otherwise, this is a line-point, and c and cw are ignored.
+  // line-point is indicated by radius of -1, and c and cw are then ignored.
+  // otherwise, this is an arc-point.
   double r; // radius
   Point c; // center
   bool cw; // clockwise (or not)
@@ -59,11 +59,9 @@ public:
         std::cout << "Offset: edges: " << g.num_edges() << "\n";
         std::cout << "Offset: faces: " << g.num_faces() << "\n";
     }
-    //boost::python::list offset(double t) {
     OffsetList offset(double t) {
-        //offset_list = boost::python::list(); // clear the list
-        offset_list2 = OffsetList(); // clear the list
-        std::cout << "Offset::offset(t= " << t << ")\n";
+        offset_list = OffsetList(); // clear the list
+        //std::cout << "Offset::offset(t= " << t << ")\n";
         set_flags(t); // mark faces as todo or done, based on the t-value, and validity of edges (after filtering).
         HEFace start;        
         while (find_start_face(start)) { // while there are faces that still require offsets
@@ -86,17 +84,10 @@ public:
         bool out_in_mode= false; // edge_mode(current_edge, t);
         HEEdge start_edge =  find_next_offset_edge( g[start].edge , t, out_in_mode); // the first edge on the start-face
         
-        boost::python::list loop;
-        Loop loop2;
+        Loop loop;
         HEEdge current_edge = start_edge;
-
-        boost::python::list pt;
-        pt.append( g[current_edge].point(t) );
-        pt.append( -1 ); // radius, center, cw
-        loop.append(pt);
-
-        Lpt pt2( g[current_edge].point(t) );
-        loop2.push_back( pt2 );
+        Lpt pt( g[current_edge].point(t) );
+        loop.push_back( pt );
         
         do {
             out_in_mode = edge_mode(current_edge, t);
@@ -112,22 +103,14 @@ public:
                 if (!s->isLine() ) // point and arc-sites
                     cw = find_cw( o->start(), o->center(), o->end() );
                 // add offset to output
-                boost::python::list lpt;
-                    lpt.append( g[next_edge].point(t) );
-                    lpt.append( o->radius() );
-                    lpt.append( o->center() );
-                    lpt.append( cw );
-                loop.append(lpt);
-
-                Lpt lpt2( g[next_edge].point(t), o->radius(), o->center(), cw );
-                loop2.push_back( lpt2 );
+                Lpt lpt( g[next_edge].point(t), o->radius(), o->center(), cw );
+                loop.push_back( lpt );
             }
             face_done[current_face]=1; // this is WRONG (?), need to check all offsets done first, not only one (for non-convex cells)
             
             current_edge = g[next_edge].twin;
         } while (current_edge != start_edge);
-        //offset_list.append(loop);
-        offset_list2.push_back( loop2 );
+        offset_list.push_back( loop );
     }
     bool edge_mode(HEEdge e, double t) {
         HEVertex src = g.source(e);
@@ -150,10 +133,8 @@ public:
         return c.is_right(s,e); // this only works for arcs smaller than a half-circle !
     }
     
-    //boost::python::list get_offsets() {
     OffsetList get_offsets() {
-        //return offset_list;
-        return offset_list2;
+        return offset_list;
     }
     
     // starting at e, find the next edge on the face that brackets t
@@ -226,8 +207,7 @@ public:
         std::cout << "\n";
     }
 protected:
-    OffsetList offset_list2;
-    //boost::python::list offset_list;
+    OffsetList offset_list;
 private:
     Offset(); // don't use.
     HEGraph& g;
