@@ -36,6 +36,7 @@ namespace ovd
 class MedialAxisWalk_py : public MedialAxisWalk {
 public:
     MedialAxisWalk_py(HEGraph& gi): MedialAxisWalk(gi) { }
+
     boost::python::list walk_py() {
         walk();
         boost::python::list walk_out;
@@ -60,5 +61,5 @@ private:
 };
 
 } // end namespace
-#endif
+#endif // MEDIAL_AXIS_PY_H
 // end medial_axis_py.hpp

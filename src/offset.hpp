@@ -16,6 +16,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with OpenVoronoi.  If not, see <http://www.gnu.org/licenses/>.
 */
+#ifndef OFFSET_H
+#define OFFSET_H
 
 #pragma once
 
@@ -30,6 +32,21 @@
 namespace ovd
 {
 
+/// \brief Line-point or arc-point component of a curve.
+struct Lpt {
+  Point p;
+  // an arc-point is indicated by positive radius, in which case c and cw are used.
+  // otherwise, this is a line-point, and c and cw are ignored.
+  double r; // radius
+  Point c; // center
+  bool cw; // clockwise (or not)
+
+  Lpt(Point pi, double ri, Point ci, bool cwi): p(pi), r(ri), c(ci), cw(cwi) {}
+  Lpt(Point pi): p(pi), r(-1) {}
+};
+typedef std::list<Lpt> Loop;
+typedef std::list<Loop> OffsetList;
+
 /// \brief From a voronoi-diagram, generate offset curve(s).
 class Offset {
 public:
@@ -42,9 +59,11 @@ public:
         std::cout << "Offset: edges: " << g.num_edges() << "\n";
         std::cout << "Offset: faces: " << g.num_faces() << "\n";
     }
-    boost::python::list offset(double t) {
-        offset_list = boost::python::list(); // clear the list
-        //std::cout << "Offset::offset(t= " << t << ")\n";
+    //boost::python::list offset(double t) {
+    OffsetList offset(double t) {
+        //offset_list = boost::python::list(); // clear the list
+        offset_list2 = OffsetList(); // clear the list
+        std::cout << "Offset::offset(t= " << t << ")\n";
         set_flags(t); // mark faces as todo or done, based on the t-value, and validity of edges (after filtering).
         HEFace start;        
         while (find_start_face(start)) { // while there are faces that still require offsets
@@ -68,17 +87,21 @@ public:
         HEEdge start_edge =  find_next_offset_edge( g[start].edge , t, out_in_mode); // the first edge on the start-face
         
         boost::python::list loop;
+        Loop loop2;
         HEEdge current_edge = start_edge;
 
         boost::python::list pt;
         pt.append( g[current_edge].point(t) );
         pt.append( -1 ); // radius, center, cw
         loop.append(pt);
+
+        Lpt pt2( g[current_edge].point(t) );
+        loop2.push_back( pt2 );
         
         do {
             out_in_mode = edge_mode(current_edge, t);
             HEEdge next_edge = find_next_offset_edge( g[current_edge].next, t, out_in_mode); // the following edge
-            //std::cout << "offset-output: "; print_edge(current_edge); std::cout << " to "; print_edge(next_edge); std::cout << "\n";
+            //std::cout << "offset-output: "; g.print_edge(current_edge); std::cout << " to "; g.print_edge(next_edge); std::cout << "\n";
             HEFace current_face = g[current_edge].face;
             {
                 Site* s = g[current_face].site;
@@ -95,12 +118,16 @@ public:
                     lpt.append( o->center() );
                     lpt.append( cw );
                 loop.append(lpt);
+
+                Lpt lpt2( g[next_edge].point(t), o->radius(), o->center(), cw );
+                loop2.push_back( lpt2 );
             }
             face_done[current_face]=1; // this is WRONG (?), need to check all offsets done first, not only one (for non-convex cells)
             
             current_edge = g[next_edge].twin;
         } while (current_edge != start_edge);
-        offset_list.append(loop);
+        //offset_list.append(loop);
+        offset_list2.push_back( loop2 );
     }
     bool edge_mode(HEEdge e, double t) {
         HEVertex src = g.source(e);
@@ -123,8 +150,10 @@ public:
         return c.is_right(s,e); // this only works for arcs smaller than a half-circle !
     }
     
-    boost::python::list get_offsets() {
-        return offset_list;
+    //boost::python::list get_offsets() {
+    OffsetList get_offsets() {
+        //return offset_list;
+        return offset_list2;
     }
     
     // starting at e, find the next edge on the face that brackets t
@@ -196,14 +225,17 @@ public:
         }
         std::cout << "\n";
     }
+protected:
+    OffsetList offset_list2;
+    //boost::python::list offset_list;
 private:
     Offset(); // don't use.
     HEGraph& g;
     std::vector<unsigned char> face_done;
-    boost::python::list offset_list;
 };
 
 
 } // end namespace
 
+#endif // OFFSET_H
 // end file offset.hpp
