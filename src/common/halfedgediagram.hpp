@@ -602,7 +602,7 @@ void filter_graph(Filter f) {
 }
 
 void print_faces() {
-    for( Face f=0;f<g.num_faces();f++) {
+    for( Face f=0;f<faces.size();f++) {
         print_face(f);
     }
 }

@@ -20,6 +20,7 @@
 #include <boost/python.hpp>
 
 #include "voronoidiagram_py.hpp"  
+#include "medial_axis_py.hpp"  
 #include "common/point.hpp"
 #include "offset.hpp"
 #include "polygon_interior.hpp"
@@ -128,9 +129,9 @@ BOOST_PYTHON_MODULE(openvoronoi) {
     bp::class_<MedialAxis, boost::noncopyable >("MedialAxis", bp::no_init)
         .def(bp::init<HEGraph&>())
     ; 
-    bp::class_<MedialAxisWalk, boost::noncopyable >("MedialAxisWalk", bp::no_init)
+    bp::class_<MedialAxisWalk_py, boost::noncopyable >("MedialAxisWalk", bp::no_init)
         .def(bp::init<HEGraph&>())
-        .def("walk", &MedialAxisWalk::walk)
+        .def("walk", &MedialAxisWalk_py::walk_py)
     ; 
 }
 

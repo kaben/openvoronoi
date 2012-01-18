@@ -17,14 +17,18 @@
  *  along with OpenVoronoi.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef MEDIAL_AXIS_H
+#define MEDIAL_AXIS_H
+
 #pragma once
 
 #include <string>
 #include <iostream>
 
-#include <boost/python.hpp>
-
 #include "graph.hpp"
+#ifndef NUMERIC_HPP
+#include "common/numeric.hpp"
+#endif
 #include "site.hpp"
 
 namespace ovd
@@ -139,6 +143,15 @@ private:
 // -- if there are two choices, take one of the choices
 // when done, find another valid start-edge
 
+struct PtDist {
+    Point p;
+    double d;
+    PtDist(Point pi, double di): p(pi), d(di) {}
+};
+typedef std::list<PtDist> PtDistList;
+typedef std::list<PtDistList> Chain;
+typedef std::list<Chain> ChainList;
+
 class MedialAxisWalk {
 public:
     MedialAxisWalk(HEGraph& gi): g(gi) {
@@ -147,8 +160,8 @@ public:
         //g.filter_graph(flt);
         
     }
-    boost::python::list walk() {
-        out = boost::python::list();
+    ChainList walk() {
+        out = ChainList();
         
         HEEdge start;
         while( find_start_edge(start) ) { // find a suitable start-edge
@@ -163,7 +176,7 @@ public:
         // start at source of start, and walk as far as possible
         // begin chain with start.
         HEEdge next;
-        boost::python::list chain;
+        Chain chain;
         append_edge(chain, start);
         set_invalid(start);
         //bool flag;
@@ -182,24 +195,18 @@ public:
             set_invalid(start);
         }
         // end chain
-        out.append( chain );
+        out.push_back( chain );
     }
     
-    void append_edge(boost::python::list& list, HEEdge edge)  {
-        //boost::python::list edge_data;
-        
-        boost::python::list point_list; // the endpoints of each edge
+    void append_edge(Chain& chain, HEEdge edge)  {
+        PtDistList point_list; // the endpoints of each edge
         HEVertex v1 = g.source( edge );
         HEVertex v2 = g.target( edge );
         // these edge-types are drawn as a single line from source to target.
         if (  (g[edge].type == LINE) || (g[edge].type == LINELINE)  || (g[edge].type == PARA_LINELINE)) {
-            boost::python::list pt1;
-            pt1.append( g[v1].position ); pt1.append( g[v1].dist() );
-            point_list.append(pt1);
-            boost::python::list pt2;
-            pt2.append( g[v2].position ); pt2.append( g[v2].dist() );
-            point_list.append(pt2);
-            //point_list.append( g[v2].position );
+            PtDist pt1( g[v1].position, g[v1].dist() );
+            PtDist pt2( g[v2].position, g[v2].dist() );
+            point_list.push_back(pt2);
         } else if ( g[edge].type == PARABOLA ) { // these edge-types are drawn as polylines with edge_points number of points
             double t_src = g[v1].dist();
             double t_trg = g[v2].dist();
@@ -208,25 +215,19 @@ public:
             int _edge_points= 20; // number of points to subdivide parabolas
             
             for (int n=0;n< _edge_points;n++) {
-                //double t = t_min + n*(t_max-t_min)/(_edge_points-1); // linear
                 double t;
                 if (t_src<=t_trg) // increasing t-value
-                    t = t_min + ((t_max-t_min)/sq(_edge_points-1))*sq(n);
+                    t = t_min + ((t_max-t_min)/numeric::sq(_edge_points-1))*numeric::sq(n);
                 else if (t_trg<t_src) // decreasing t-value
-                    t = t_max - ((t_max-t_min)/sq(_edge_points))*sq(n);
+                    t = t_max - ((t_max-t_min)/numeric::sq(_edge_points))*numeric::sq(n);
                 else
                     exit(-1);
                 Point p = g[edge].point(t);
-                boost::python::list pt;
-                pt.append( p); pt.append( t );
-                point_list.append(pt);
+                PtDist pt( p, t );
+                point_list.push_back(pt);
             }
         }
-        //edge_data.append( point_list );
-        //edge_data.append( g[edge].type );
-        //edge_data.append( g[v1].status ); // source status
-        //edge_data.append( g[v2].status ); // target status
-        list.append( point_list );
+        chain.push_back( point_list );
     }
     
     bool next_edge(HEEdge e, HEEdge& next) {
@@ -281,8 +282,9 @@ public:
         }
         return (count==1);
     }
+protected:
+    ChainList out;
 private:
-    boost::python::list out;
     MedialAxisWalk(); // don't use.
     HEGraph& g; // original graph
 
@@ -291,3 +293,4 @@ private:
 } // end namespace
 
 // end file polygon_interior.hpp
+#endif // MEDIAL_AXIS_H

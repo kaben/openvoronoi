@@ -139,6 +139,8 @@ set( OVD_INCLUDE_FILES
     ${OpenVoronoi_SOURCE_DIR}/vertex_positioner.hpp
     ${OpenVoronoi_SOURCE_DIR}/facegrid.hpp
     ${OpenVoronoi_SOURCE_DIR}/offset.hpp
+    ${OpenVoronoi_SOURCE_DIR}/medial_axis.hpp
+    ${OpenVoronoi_SOURCE_DIR}/polygon_interior.hpp
     ${CMAKE_CURRENT_BINARY_DIR}/version_string.hpp
 )
 
