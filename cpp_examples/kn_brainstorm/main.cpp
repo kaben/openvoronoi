@@ -62,9 +62,9 @@ int main() {
     ovd::MedialAxisWalk maw(g);
     ovd::ChainList toolpath = maw.walk();
     BOOST_FOREACH( ovd::Chain chain, toolpath ) { // loop through each chain
-      BOOST_FOREACH( ovd::PtDistList pt_dist_list, chain ) { // loop through each point-list
-        BOOST_FOREACH( ovd::PtDist pt_dist, pt_dist_list ) { // loop through each Point/distance
-          std::cout << "position:" << pt_dist.p << "; distance:" << pt_dist.d << std::endl;;
+      BOOST_FOREACH( ovd::MedialPointList pt_dist_list, chain ) { // loop through each point-list
+        BOOST_FOREACH( ovd::MedialPoint pt_dist, pt_dist_list ) { // loop through each Point/distance
+          std::cout << "position:" << pt_dist.p << "; clearance_radius:" << pt_dist.clearance_radius << std::endl;;
         }
       }
     }

@@ -143,13 +143,13 @@ private:
 // -- if there are two choices, take one of the choices
 // when done, find another valid start-edge
 
-struct PtDist {
+struct MedialPoint {
     Point p;
-    double d;
-    PtDist(Point pi, double di): p(pi), d(di) {}
+    double clearance_radius;
+    MedialPoint(Point pi, double r): p(pi), clearance_radius(r) {}
 };
-typedef std::list<PtDist> PtDistList;
-typedef std::list<PtDistList> Chain;
+typedef std::list<MedialPoint> MedialPointList;
+typedef std::list<MedialPointList> Chain;
 typedef std::list<Chain> ChainList;
 
 class MedialAxisWalk {
@@ -199,13 +199,13 @@ public:
     }
     
     void append_edge(Chain& chain, HEEdge edge)  {
-        PtDistList point_list; // the endpoints of each edge
+        MedialPointList point_list; // the endpoints of each edge
         HEVertex v1 = g.source( edge );
         HEVertex v2 = g.target( edge );
         // these edge-types are drawn as a single line from source to target.
         if (  (g[edge].type == LINE) || (g[edge].type == LINELINE)  || (g[edge].type == PARA_LINELINE)) {
-            PtDist pt1( g[v1].position, g[v1].dist() );
-            PtDist pt2( g[v2].position, g[v2].dist() );
+            MedialPoint pt1( g[v1].position, g[v1].dist() );
+            MedialPoint pt2( g[v2].position, g[v2].dist() );
             point_list.push_back(pt2);
         } else if ( g[edge].type == PARABOLA ) { // these edge-types are drawn as polylines with edge_points number of points
             double t_src = g[v1].dist();
@@ -223,7 +223,7 @@ public:
                 else
                     exit(-1);
                 Point p = g[edge].point(t);
-                PtDist pt( p, t );
+                MedialPoint pt( p, t );
                 point_list.push_back(pt);
             }
         }

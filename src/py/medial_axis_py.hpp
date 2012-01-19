@@ -42,12 +42,12 @@ public:
         boost::python::list walk_out;
         BOOST_FOREACH( Chain chain, out ) { // loop through each chain
             boost::python::list list;
-            BOOST_FOREACH( PtDistList pt_dist_list, chain ) { // loop through each point-list
+            BOOST_FOREACH( MedialPointList pt_dist_list, chain ) { // loop through each point-list
                 boost::python::list point_list;
-                BOOST_FOREACH( PtDist pt_dist, pt_dist_list ) { // loop through each Point/distance
+                BOOST_FOREACH( MedialPoint pt_dist, pt_dist_list ) { // loop through each Point/distance
                     boost::python::list pt;
                     pt.append( pt_dist.p );
-                    pt.append( pt_dist.d );
+                    pt.append( pt_dist.clearance_radius );
                     point_list.append( pt );
                 }
                 list.append( point_list );
