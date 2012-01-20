@@ -22,7 +22,12 @@
 #include "voronoidiagram_py.hpp"  
 #include "medial_axis_py.hpp"  
 #include "common/point.hpp"
+<<<<<<< HEAD
 #include "offset_py.hpp"
+=======
+#include "offset.hpp"
+#include "offset2.hpp"
+>>>>>>> upstream/master
 #include "polygon_interior.hpp"
 #include "medial_axis.hpp"
 
@@ -121,7 +126,11 @@ BOOST_PYTHON_MODULE(openvoronoi) {
         .def(bp::init<HEGraph&>())
         .def("str", &Offset_py::print )
         .def("offset", &Offset_py::offset_py )
-
+    ; 
+    bp::class_<FaceOffset, boost::noncopyable >("FaceOffset", bp::no_init)
+        .def(bp::init<HEGraph&>())
+        .def("offset", &FaceOffset::offset )
+        .def("str", &FaceOffset::print )
     ; 
     bp::class_<PolygonInterior, boost::noncopyable >("PolygonInterior", bp::no_init)
         .def(bp::init<HEGraph&>())

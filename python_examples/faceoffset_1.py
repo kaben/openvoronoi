@@ -200,7 +200,7 @@ if __name__ == "__main__":
     
     
     # segments from ttt
-    segs = ttt_segments(  "O", 20000)
+    segs = ttt_segments(  "E", 20000)
     segs = translate(segs, -0.06, 0.05)
     segs = modify_segments(segs)
     
@@ -211,19 +211,29 @@ if __name__ == "__main__":
     pi = ovd.PolygonInterior( vd.getGraph() )
     #pi.str()
     
-    of = ovd.Offset( vd.getGraph() ) # pass the created graph to the Offset class
+    of = ovd.FaceOffset( vd.getGraph() ) # pass the created graph to the Offset class
+    
     #of.str()
     ofs_list=[]
     t_before = time.time()
-    for t in [0.002*x for x in range(1,10)]:
-        ofs = of.offset(t)
-        ofs_list.append(ofs)
+    #for t in [0.002*x for x in range(1,10)]:
+    t=0.005
+    of.offset(t)
+    print of.str()
+    t=0.006
+    of.offset(t)
+    print of.str()
+    t=0.008
+    of.offset(t)
+    print of.str()
+    #ofs_list.append(ofs)
     
-        
+    """
     t_after = time.time()
     oftime = t_after-t_before
     for ofs in ofs_list:
         drawOffsets(myscreen, ofs)
+    """
     
     oftext  = ovdvtk.Text()
     oftext.SetPos( (50, 100) )

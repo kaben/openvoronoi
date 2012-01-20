@@ -2,21 +2,6 @@ project(OpenVoronoi)
 
 cmake_minimum_required(VERSION 2.4)
 
-# some options to set what is built:
-option(BUILD_CXX_LIB
-  "Build/install the pure c++ library? " ON)
-
-option(BUILD_PY_LIB 
-  "Build/install the python ocl library? " ON)
-
-
-if (NOT BUILD_CXX_LIB)
-    MESSAGE(STATUS " Note: will NOT build pure c++ library")
-endif(NOT BUILD_CXX_LIB)
-
-if (NOT BUILD_PY_LIB)
-    MESSAGE(STATUS " Note: will NOT build python library")
-endif(NOT BUILD_PY_LIB)
 
 #
 # Turn compiler warnings up to 11, at least with gcc.  I dont know how to
@@ -93,28 +78,14 @@ include_directories(${QD_INCLUDE_DIR})
 
 message( STATUS "build type = " ${CMAKE_BUILD_TYPE})
 
-#### create version_string.hpp, http://stackoverflow.com/questions/3780667
+################ create version_string.hpp, http://stackoverflow.com/questions/3780667
 # include the output directory, where the version_string.hpp file is generated
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
-# a custom target that is always built
-add_custom_target(
-    version_string 
-    ALL
-    DEPENDS ver_string 
-)
-# creates version_string.hpp using cmake script
-add_custom_command(
-    OUTPUT ver_string ${CMAKE_CURRENT_BINARY_DIR}/version_string.hpp
-    COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-                                            -P ${CMAKE_CURRENT_SOURCE_DIR}/version_string.cmake
-)
-# version_string.hpp is a generated file
-set_source_files_properties(
-    ${CMAKE_CURRENT_BINARY_DIR}/version_string.hpp
-    PROPERTIES GENERATED TRUE
-    HEADER_FILE_ONLY TRUE
-)
-#### end create version_string.hpp
+INCLUDE(version_string.cmake)
+STRING(REGEX REPLACE "([0-9][0-9]).*" "\\1" GIT_MAJOR_VERSION "${GIT_COMMIT_ID}" )
+STRING(REGEX REPLACE "[0-9][0-9].([0-9][0-9])-.*" "\\1" GIT_MINOR_VERSION "${GIT_COMMIT_ID}" )
+STRING(REGEX REPLACE "[0-9][0-9].[0-9][0-9]-(.*)-.*" "\\1" GIT_PATCH_VERSION "${GIT_COMMIT_ID}" )
+set(MY_VERSION "${GIT_MAJOR_VERSION}.${GIT_MINOR_VERSION}.${GIT_PATCH_VERSION}" CACHE STRING "version")
 
 
 # this defines the source-files
@@ -138,7 +109,9 @@ set( OVD_INCLUDE_FILES
     ${OpenVoronoi_SOURCE_DIR}/checker.hpp
     ${OpenVoronoi_SOURCE_DIR}/vertex_positioner.hpp
     ${OpenVoronoi_SOURCE_DIR}/facegrid.hpp
+    
     ${OpenVoronoi_SOURCE_DIR}/offset.hpp
+    ${OpenVoronoi_SOURCE_DIR}/offset2.hpp
     ${OpenVoronoi_SOURCE_DIR}/medial_axis.hpp
     ${OpenVoronoi_SOURCE_DIR}/polygon_interior.hpp
     ${CMAKE_CURRENT_BINARY_DIR}/version_string.hpp
@@ -167,23 +140,14 @@ add_library(
     SHARED
     ${OVD_SRC}
 )
-add_dependencies( 
-    libopenvoronoi
-    version_string 
-)
 set_target_properties(libopenvoronoi PROPERTIES PREFIX "")
-# todo: figure out the git-tag automatically and use it as the version/suffix
-set_target_properties(libopenvoronoi PROPERTIES VERSION "11.10") 
+set_target_properties(libopenvoronoi PROPERTIES VERSION ${MY_VERSION}) 
 
-# the pure c++ shared library
+# static library, linked with the python module below
 add_library(
     openvoronoi_static
     STATIC
     ${OVD_SRC}
-)
-add_dependencies( 
-    openvoronoi_static
-    version_string 
 )
 
 # this makes the Python module
@@ -192,32 +156,36 @@ add_library(
     MODULE
     py/open_voronoi_py.cpp
 )
-# libopenvoronoi
 target_link_libraries(openvoronoi openvoronoi_static ${Boost_LIBRARIES} ${QD_LIBRARY}) 
 set_target_properties(openvoronoi PROPERTIES PREFIX "") 
-
+set_target_properties(openvoronoi PROPERTIES VERSION ${MY_VERSION}) 
 
 #
 # this figures out where to install the Python modules
 #
-
 execute_process(
-    COMMAND python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()"
+    COMMAND python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(0,0,\"/usr/local\")"
     OUTPUT_VARIABLE Python_site_packages
     OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+) # on Ubuntu 11.10 this outputs: /usr/local/lib/python2.7/dist-packages
+
+
+# strip away /usr/local/  because that is what CMAKE_INSTALL_PREFIX is set to
+# also, since there is no leading "/", it makes ${Python_site_packages} a relative path.
+STRING(REGEX REPLACE "/usr/local/(.*)$" "\\1" Python_site_packages "${Python_site_packages}" )
+
+MESSAGE(STATUS "CMAKE_INSTALL_PREFIX is : " ${CMAKE_INSTALL_PREFIX})
 MESSAGE(STATUS "Python libraries will be installed to: " ${Python_site_packages})
 
-if (BUILD_PY_LIB)
+
+
     # this installs the python library
     install(
         TARGETS openvoronoi
         LIBRARY DESTINATION ${Python_site_packages}
     )
-endif (BUILD_PY_LIB)
 
 # this installs the c++ library
-if (BUILD_CXX_LIB)
     install(
         TARGETS libopenvoronoi
         LIBRARY 
@@ -242,7 +210,6 @@ if (BUILD_CXX_LIB)
         DESTINATION include/openvoronoi/solvers
         PERMISSIONS OWNER_READ GROUP_READ WORLD_READ
     )
-endif (BUILD_CXX_LIB)
 
 
 # "make package" stuff
@@ -253,16 +220,13 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-set(CPACK_GENERATOR "DEB")
-set(CPACK_DEBIAN_PACKAGE_MAINTAINER "anders.e.e.wallin@gmail.com")
-set(CPACK_PACKAGE_NAME "OpenVoronoi")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "2D voronoi diagram algorithm")
-set(CPACK_DEBIAN_PACKAGE_SECTION "science")
-set(CPACK_DEBIAN_PACKAGE_VERSION "")
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "python, libboost-python-dev, libqd" )
-set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${DEB_ARCHITECTURE})
-SET(CPACK_PACKAGE_VERSION_MAJOR "11") # todo: find the version automatically from the git-tag
-SET(CPACK_PACKAGE_VERSION_MINOR "10")
-set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}_${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}_${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}")
+include(package_details.cmake)
 
+# run the source package generation as a target, so we don't have to do it every time
+add_custom_target(spackage 
+              ${CMAKE_COMMAND} -D SRC_DIR:STRING=${CMAKE_SOURCE_DIR} -D MY_VERSION:STRING=${MY_VERSION} -C ${CMAKE_SOURCE_DIR}/package_details.cmake
+              -P ${CMAKE_CURRENT_SOURCE_DIR}/deb/DebSourcePPA.cmake 
+              #ERROR_QUIET # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            ) # get the changes file as an output from here?
+# -C ${CMAKE_BINARY_DIR}/CMakeCache.txt
 include(CPack) # this should be last

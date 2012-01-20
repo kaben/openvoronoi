@@ -16,13 +16,13 @@
  *  You should have received a copy of the GNU General Public License
  *  along with OpenVoronoi.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OFFSET_H
-#define OFFSET_H
 
 #pragma once
 
 #include <string>
 #include <iostream>
+
+#include <boost/python.hpp>
 
 #include "graph.hpp"
 #include "site.hpp"
@@ -30,53 +30,24 @@
 namespace ovd
 {
 
-/// \brief Line-point or arc-point component of a curve.
-struct Lpt {
-  Point p;
-  // line-point is indicated by radius of -1, and c and cw are then ignored.
-  // otherwise, this is an arc-point.
-  double r; // radius
-  Point c; // center
-  bool cw; // clockwise (or not)
+typedef std::vector<HEFace> FaceLoop; // store the t-value too?
+typedef std::vector<FaceLoop> OffsetLoops;
 
-  Lpt(Point pi, double ri, Point ci, bool cwi): p(pi), r(ri), c(ci), cw(cwi) {}
-  Lpt(Point pi): p(pi), r(-1) {}
-};
-typedef std::list<Lpt> Loop;
-typedef std::list<Loop> OffsetList;
-
-/// \brief From a voronoi-diagram, generate offsets.
-/// an offset is allways a closed loop.
-/// the loop consists of offset-elements from each face that the loop visits.
-/// each face is associated with a Site, and the offset element from
-/// - a point-site is a circular arc
-/// - a line-site is a line
-/// - an arc is a circular arc
-///
-/// This class produces offsets at the given offset-distance on the entire
-/// voronoi-diagram. To produce offsets only inside or outside a given geometry,
-/// use a filter first. The filter sets the valid-property of edges, so that offsets
-/// are not produced on faces with one or more invalid edge.
-class Offset {
+// experimental alternative offset approach.
+class FaceOffset {
 public:
-    Offset(HEGraph& gi): g(gi) {
+    FaceOffset(HEGraph& gi): g(gi) {
         face_done.clear();
         face_done.assign( g.num_faces(), 1 );
     }
-    void print() {
-        std::cout << "Offset: verts: " << g.num_vertices() << "\n";
-        std::cout << "Offset: edges: " << g.num_edges() << "\n";
-        std::cout << "Offset: faces: " << g.num_faces() << "\n";
-    }
-    OffsetList offset(double t) {
-        offset_list = OffsetList(); // clear the list
-        //std::cout << "Offset::offset(t= " << t << ")\n";
+    void offset(double t) {
+        offset_list = OffsetLoops(); // clear the list
         set_flags(t); // mark faces as todo or done, based on the t-value, and validity of edges (after filtering).
         HEFace start;        
         while (find_start_face(start)) { // while there are faces that still require offsets
             offset_walk(start,t); // start on the face, and do an offset loop
         }
-        return offset_list;
+        //return offset_list;
     }
     bool find_start_face(HEFace& start) {
         for(HEFace f=0; f<g.num_faces() ; f++) {
@@ -92,32 +63,43 @@ public:
         //std::cout << " offset_walk() starting on face " << start << "\n";
         bool out_in_mode= false; 
         HEEdge start_edge =  find_next_offset_edge( g[start].edge , t, out_in_mode); // the first edge on the start-face
-        
-        Loop loop;
         HEEdge current_edge = start_edge;
-        Lpt pt( g[current_edge].point(t) );
-        loop.push_back( pt );
         
+        FaceLoop loop; // store the output in this loop
+        
+        // add the first point to the loop.
+        //boost::python::list pt;
+        //pt.append( g[current_edge].point(t) );
+        //pt.append( -1 ); // radius, center, cw
+        //loop.append(pt);
+        //loop.append
         do {
             out_in_mode = edge_mode(current_edge, t);
             // find the next edge
-            HEEdge next_edge = find_next_offset_edge( g[current_edge].next, t, out_in_mode); // the following edge
-            //std::cout << "offset-output: "; g.print_edge(current_edge); std::cout << " to "; g.print_edge(next_edge); std::cout << "\n";
+            HEEdge next_edge = find_next_offset_edge( g[current_edge].next, t, out_in_mode); 
+            //std::cout << "offset-output: "; print_edge(current_edge); std::cout << " to "; print_edge(next_edge); std::cout << "\n";
             HEFace current_face = g[current_edge].face;
             { // append the offset-element of current_face to the output
+                loop.push_back(current_face);
+                /*
                 Site* s = g[current_face].site;
                 Ofs* o = s->offset( g[current_edge].point(t), g[next_edge].point(t) ); // ask the Site for offset-geometry here.
                 bool cw(true);
                 if (!s->isLine() ) // point and arc-sites produce arc-offsets, for which cw must be set.
                     cw = find_cw( o->start(), o->center(), o->end() ); // figure out cw or ccw arcs?
                 // add offset to output
-                Lpt lpt( g[next_edge].point(t), o->radius(), o->center(), cw );
-                loop.push_back( lpt );
+                boost::python::list lpt;
+                    lpt.append( g[next_edge].point(t) );
+                    lpt.append( o->radius() );
+                    lpt.append( o->center() );
+                    lpt.append( cw );
+                loop.append(lpt);
+                */
             }
             face_done[current_face]=1; // although we may revisit current_face (if it is non-convex), it seems safe to mark it "done" here.
-            current_edge = g[next_edge].twin;
+            current_edge = g[next_edge].twin; // NOTE!! twin!! we change from one face to another here.
         } while (current_edge != start_edge);
-        offset_list.push_back( loop );
+        offset_list.push_back(loop); // append the created loop to the output
     }
     bool edge_mode(HEEdge e, double t) {
         HEVertex src = g.source(e);
@@ -138,10 +120,6 @@ public:
         // arc from current to next edge
         // center at 
         return center.is_right(start,end); // this only works for arcs smaller than a half-circle !
-    }
-    
-    OffsetList get_offsets() {
-        return offset_list;
     }
     
     // starting at e, find the next edge on the face that brackets t
@@ -214,23 +192,26 @@ public:
         double max_t = std::max(a,b);
         return ( (min_t<t) && (t<max_t) );
     }
-    void print_status() {
-        for(HEFace f=0; f<g.num_faces() ; f++) {
-            std::cout << (int)face_done[f];
+    
+    void print() {
+        std::cout << "Offset has " << offset_list.size() << " loops.\n";
+        int n(0);
+        BOOST_FOREACH(FaceLoop l, offset_list ) {
+            std::cout << " Loop " << n++ << " has " << l.size() << " faces:\n";
+            BOOST_FOREACH(HEFace f, l) {
+                std::cout << "   " << f << "\n";
+            }
         }
-        std::cout << "\n";
     }
-protected:
-    OffsetList offset_list;
 private:
-    Offset(); // don't use.
+    FaceOffset(); // don't use.
     HEGraph& g;
     // hold a 0/1 flag for each face, indicating if an offset for this face has been produced or not.
     std::vector<unsigned char> face_done;
+    OffsetLoops offset_list;
 };
 
 
 } // end namespace
 
-#endif // OFFSET_H
-// end file offset.hpp
+// end file offset2.hpp
