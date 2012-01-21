@@ -38,7 +38,7 @@ namespace ovd
 // marks the valid-property true for edges belonging to the medial axis
 // and false for other edges.
 struct medial_filter {
-    medial_filter(HEGraph& gi) : g(gi) { }
+    medial_filter(HEGraph& gi, double thr=0.8) : g(gi) , _dot_product_threshold(thr) { }
     bool operator()(const HEEdge& e) const {
         if (g[e].type == LINESITE || g[e].type == NULLEDGE) 
             return true; // we keep linesites and nulledges
@@ -71,7 +71,7 @@ struct medial_filter {
         HEEdge e2 = find_segment(endp2);
         e2 = g[e2].twin; // this makes the edges oriented in the same direction 
         double dotprod = edge_dotprod(e1,e2);
-        return fabs(dotprod)>0.8; // FIXME: make this adjustable
+        return fabs(dotprod)>_dot_product_threshold;
     }
     
     // calculate the dot-product between unit vectors aligned along edges e1->e2
@@ -126,6 +126,7 @@ struct medial_filter {
     
 private:
     HEGraph& g;
+    double _dot_product_threshold;
 };
 
 /// \brief From a voronoi-diagram, generate offset curve(s).
@@ -139,8 +140,6 @@ public:
 private:
     MedialAxis(); // don't use.
     HEGraph& g; // original graph
-    
-
 };
 
 // when we want a toolpath along the medial axis we use this class
@@ -199,11 +198,11 @@ public:
         HEVertex v1 = g.source( edge );
         HEVertex v2 = g.target( edge );
         // these edge-types are drawn as a single line from source to target.
-        if (  (g[edge].type == LINE) || (g[edge].type == LINELINE)  || (g[edge].type == PARA_LINELINE)) {
+        if (   (g[edge].type == LINELINE)  || (g[edge].type == PARA_LINELINE)) {
             MedialPoint pt1( g[v1].position, g[v1].dist() );
             MedialPoint pt2( g[v2].position, g[v2].dist() );
             point_list.push_back(pt2);
-        } else if ( g[edge].type == PARABOLA ) { // these edge-types are drawn as polylines with edge_points number of points
+        } else if ( (g[edge].type == PARABOLA) || (g[edge].type == LINE) ) { // these edge-types are drawn as polylines with edge_points number of points
             double t_src = g[v1].dist();
             double t_trg = g[v2].dist();
             double t_min = std::min(t_src,t_trg);

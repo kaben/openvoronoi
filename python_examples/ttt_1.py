@@ -1,6 +1,7 @@
-import ttt
-import openvoronoi as ovd
-import ovdvtk
+import ttt                # https://github.com/aewallin/truetype-tracer
+import openvoronoi as ovd # https://github.com/aewallin/openvoronoi
+import ovdvtk 
+
 import time
 import vtk
 
@@ -98,7 +99,7 @@ def insert_polygon_points(vd, polygon):
 
 def insert_polygon_segments(vd,id_list):
     j=0
-    jmax=9999999
+    jmax=9999999 # for debugging, set jmax to the problematic case to stop algorithm in the middle
     print "inserting ",len(id_list)," line-segments:"
     for n in range(len(id_list)):
         n_nxt = n+1
@@ -149,6 +150,11 @@ def ttt_segments(text,scale):
     wr.conic = False
     wr.cubic = False
     wr.scale = float(1)/float(scale)
+    # "L" has 36 points by default
+    wr.conic_biarc_subdivision = 10 # this has no effect?
+    wr.conic_line_subdivision = 50 # =10 increasesn nr of points to 366, = 5 gives 729 pts
+    wr.cubic_biarc_subdivision = 10 # no effect?
+    wr.cubic_line_subdivision = 10 # no effect?
     s3 = ttt.ttt(text,wr) 
     segs = wr.get_segments()
     return segs
@@ -166,18 +172,17 @@ if __name__ == "__main__":
     ovdvtk.drawOCLtext(myscreen, rev_text=ovd.revision() )
     
     scale=1
-    myscreen.render()
-    #random.seed(42)
+
     far = 1
     camPos = far
     zmult = 3
-    # camPos/float(1000)
     myscreen.camera.SetPosition(0, -camPos/float(1000), zmult*camPos) 
     myscreen.camera.SetClippingRange(-(zmult+1)*camPos,(zmult+1)*camPos)
     myscreen.camera.SetFocalPoint(0.0, 0, 0)
 
-    segs = ttt_segments(  "P", 10000)
-    segs = translate(segs, -0.06, 0.05)
+    segs = ttt_segments(  "EMC2", 70000)
+    #segs = ttt_segments(  "P", 2500)
+    segs = translate(segs, -0.36, -0.05)
     
     #segs = ttt_segments(  "ABCDEFGHIJKLM", 64000)
     segs2 = ttt_segments( "NOPQRSTUVWXYZ", 64000)
@@ -230,7 +235,7 @@ if __name__ == "__main__":
     #vd.check()
     vod.setVDText2(times)
     
-    ovd.PolygonInterior( vd.getGraph() )
+    ovd.PolygonInterior( vd.getGraph() , True )
     ovd.MedialAxis( vd.getGraph() )
     
     vod.setAll()

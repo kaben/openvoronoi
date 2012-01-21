@@ -1,0 +1,4 @@
+//version_string.hpp - written by cmake. changes will be lost!
+#ifndef VERSION_STRING
+#define VERSION_STRING "12.01-59-g60e8303 Debug"
+#endif
