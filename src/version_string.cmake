@@ -7,10 +7,12 @@
 # 'g' is ???, and 5e1fb47 is the first 7 chars of the git sha1 commit id.
 
 
+set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR} ) # Findqd.cmake is in this dir
 find_package(Git)
 if(GIT_FOUND)
     execute_process(
         COMMAND ${GIT_EXECUTABLE} describe --tags 
+        WORKING_DIRECTORY ${OpenVoronoi_SOURCE_DIR}
         RESULT_VARIABLE res_var 
         OUTPUT_VARIABLE GIT_COM_ID 
     )
