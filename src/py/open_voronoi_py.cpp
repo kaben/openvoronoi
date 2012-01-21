@@ -22,12 +22,8 @@
 #include "voronoidiagram_py.hpp"  
 #include "medial_axis_py.hpp"  
 #include "common/point.hpp"
-<<<<<<< HEAD
 #include "offset_py.hpp"
-=======
-#include "offset.hpp"
 #include "offset2.hpp"
->>>>>>> upstream/master
 #include "polygon_interior.hpp"
 #include "medial_axis.hpp"
 
