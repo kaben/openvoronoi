@@ -194,7 +194,7 @@ Solution VertexPositioner::position(Site* s1, double k1, Site* s2, double k2, Si
         //std::cout << std::scientific;
     }
 
-    assert(0); // in Debug mode, stop here.
+    //assert(0); // in Debug mode, stop here.
     
     // try a desperate solution
     double t_mid = 0.5*(t_min+t_max);
