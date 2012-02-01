@@ -22,7 +22,9 @@
 #include <sstream>
 
 #include "point.hpp"
+#include "numeric.hpp"
 
+using namespace ovd::numeric;
 namespace ovd {
 
 double Point::norm() const {
@@ -77,24 +79,67 @@ double Point::distance_to_line(const Point &p1, const Point &p2) const {
     }
 }
 
-
 bool Point::is_right(const Point &p1, const Point &p2) const {
     // is Point right of line through points p1 and p2 ?, in the XY plane.
     // this is an ugly way of doing a determinant
     // should be prettyfied sometime...
     /// \todo FIXME: what if p1==p2 ? (in the XY plane)
-    double a1 = p2.x - p1.x;
-    double a2 = p2.y - p1.y;
-    double t1 = a2;
-    double t2 = -a1;
-    double b1 = x - p1.x;
-    double b2 = y - p1.y;
 
-    double t = t1 * b1 + t2 * b2;
-    if (t > 0.0) 
-        return true;
-    else
-        return false;    
+    //double a1 = p2.x - p1.x;
+    //double a2 = p2.y - p1.y;
+    //double t1 = a2;
+    //double t2 = -a1;
+    //double b1 = x - p1.x;
+    //double b2 = y - p1.y;
+
+    //double t = t1 * b1 + t2 * b2;
+    //if (t > 0.0) 
+    //    return true;
+    //else
+    //    return false;    
+
+    // <comment 20120130 by kaben>
+    // We use the cross product b x a, with vectors b:=(*this-p1) and
+    // a:=(p2-p1) in the XY plane of R^3, to decide whether *this is to
+    // the right of (p2-p1); this is equivalent to determining whether
+    // t, defined as the Z coordinate of b x a, is positive.
+    //
+    // Note: if p1==p2 then the cross product is the zero vector, in
+    // which case is_right() should return false (and if there were an
+    // is_left(), it should also return false).
+    //
+    // I believe that in the code above, subtraction following rounding
+    // errors in multiplication can lead to loss of significance through
+    // subtractive cancellation when *this, p1, and p2 are very
+    // close-together, and (*this-p1) and (p2-p1) are nearly parallel.
+    //
+    // The code below addresses this in two ways:
+    // - it avoids subtractive cancellation by avoiding subtraction;
+    // - it preserves as much significance as possible by summing
+    //   positives from smallest to largest in magnitude, and similarly
+    //   but separately summing negatives.
+    //
+    // Caveat: I am not an expert in numerical analysis, so if I'm
+    // talking nonsense, please say so.
+    // </comment 20120130 by kaben>
+
+    // Notes:
+    // double bx(x-p1.x), by(y-p1.y);
+    // double ax(p2.x-p1.x), ay(p2.y-p1.y);
+    // double t(bx*ay-by*ax);
+    // so t == (x-p1.x)*(p2.y-p1.y)-(y-p1.y)*(p2.x-p1.x)
+    //      ==  x*p2.y +p1.x*p1.y +p1.y*p2.x +y*p1.x 
+    //        - y*p2.x -p1.y*p1.x -p1.x*p2.y -x*p1.y.
+
+    // collect coordinate scalars into pos and neg partitions; in both
+    // partitions we just store abs values to make them easier to sort,
+    // sum, and compare.
+
+    typedef Ac<double> Acd;
+    Acd t(Acd(x, -p1.x)*Acd(p2.y, -p1.y) - Acd(y, -p1.y)*Acd(p2.x, -p1.x));
+    double pos_sum, neg_sum;
+    t.get_sum(pos_sum, neg_sum);
+    return (-neg_sum < pos_sum);
 }
 
 /* **************** Operators ***************  

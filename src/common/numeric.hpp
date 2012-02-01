@@ -20,6 +20,7 @@
 #ifndef NUMERIC_HPP
 #define NUMERIC_HPP
 
+#include <algorithm>
 #include <vector>
 #include <qd/qd_real.h> 
 
@@ -32,6 +33,150 @@ namespace numeric {
     double chop(double val);
     double chop(double val, double tolerance);
     qd_real chop(qd_real val);
+
+    // accumulator class to collect scalars, and later sum them in an
+    // order that tries to maintain as much precision as possible.
+    template <class Scalar>
+    struct Ac {
+        std::vector<Scalar> p, n;
+        Ac(const Ac &a): p(a.p), n(a.n) {}
+        Ac()
+        {}
+        Ac(const Scalar &d0)
+        { add(d0); }
+        Ac(const Scalar &d0, const Scalar &d1)
+        { add(d0); add(d1); }
+        Ac(const Scalar &d0, const Scalar &d1, const Scalar &d2)
+        { add(d0); add(d1); add(d2); }
+        Ac(const Scalar &d0,
+           const Scalar &d1,
+           const Scalar &d2,
+           const Scalar &d3
+        ){ add(d0); add(d1); add(d2); add(d3); }
+        Ac(const Scalar &d0,
+           const Scalar &d1,
+           const Scalar &d2,
+           const Scalar &d3,
+           const Scalar &d4
+        ){ add(d0); add(d1); add(d2); add(d3); add(d4); }
+        Ac(const Scalar &d0,
+           const Scalar &d1,
+           const Scalar &d2,
+           const Scalar &d3,
+           const Scalar &d4,
+           const Scalar &d5
+        ){ add(d0); add(d1); add(d2); add(d3); add(d4); add(d5); }
+        Ac(const Scalar &d0,
+           const Scalar &d1,
+           const Scalar &d2,
+           const Scalar &d3,
+           const Scalar &d4,
+           const Scalar &d5,
+           const Scalar &d6
+        ){ add(d0); add(d1); add(d2); add(d3); add(d4); add(d5); add(d6); }
+        void clear() {
+            p = std::vector<Scalar>();
+            n = std::vector<Scalar>();
+        };
+        void add(const Scalar &d) {
+            if (d<0) n.push_back(d);
+            else p.push_back(d);
+        }
+        void get_sum(Scalar &pos, Scalar &neg) {
+            pos = 0.; neg = 0.;
+            sort(p.begin(), p.end());
+            sort(n.begin(), n.end());
+            reverse(n.begin(), n.end());
+            for (unsigned int i=0; i<p.size(); i++) { pos += p[i]; }
+            for (unsigned int i=0; i<n.size(); i++) { neg += n[i]; }
+        }
+        Scalar get_sum() {
+            Scalar pos(0), neg(0);
+            get_sum(pos, neg);
+            return pos + neg;
+        }
+        //operator Scalar() { return get_sum(); }
+        void operator +=(const Scalar &d) { add(d); }
+        void operator +=(const Ac &a) {
+            for (unsigned int i=0; i<a.p.size(); i++) p.push_back(p[i]);
+            for (unsigned int i=0; i<a.n.size(); i++) n.push_back(n[i]);
+        }
+        void operator -=(const Scalar &d) { add(-d); }
+        void operator -=(const Ac &a) {
+            for (unsigned int i=0; i<a.p.size(); i++) n.push_back(-p[i]);
+            for (unsigned int i=0; i<a.n.size(); i++) p.push_back(-n[i]);
+        }
+        void operator =(const Scalar &d) { clear(); add(d); }
+        void operator =(const Ac &a) { p = a.p; n = a.n; }
+    };
+    
+    template <class Scalar>
+    void prod(std::vector<Scalar> &a, std::vector<Scalar> &b, Ac<Scalar> &result) {
+        for (unsigned int i=0; i<a.size(); i++)
+            for (unsigned int j=0; j<b.size(); j++)
+                result.add(a[i]*b[j]);
+    }
+    
+    template <class Scalar>
+    Ac<Scalar> operator *(Ac<Scalar> a, Scalar d) {
+        Ac<Scalar> ac;
+        for (unsigned int i=0; i<a.p.size(); i++) ac.add(a.p[i]*d);
+        for (unsigned int i=0; i<a.n.size(); i++) ac.add(a.n[i]*d);
+        return ac;
+    }
+
+    template <class Scalar>
+    Ac<Scalar> operator *(Scalar d, Ac<Scalar> a) {
+        return a*d;
+    }
+
+    template <class Scalar>
+    Ac<Scalar> operator *(Ac<Scalar> a, Ac<Scalar> b) {
+        Ac<Scalar> ac;
+        prod(a.p, b.p, ac);
+        prod(a.n, b.p, ac);
+        prod(a.p, b.n, ac);
+        prod(a.n, b.n, ac);
+        return ac;
+    }
+
+    template <class Scalar>
+    Ac<Scalar> operator /(Ac<Scalar> a, Scalar d) {
+        Ac<Scalar> ac;
+        Scalar d_inv(1./d);
+        for (unsigned int i=0; i<a.p.size(); i++) ac.add(a.p[i]*d_inv);
+        for (unsigned int i=0; i<a.n.size(); i++) ac.add(a.n[i]*d_inv);
+        return ac;
+    }
+
+    template <class Scalar>
+    Ac<Scalar> operator +(Ac<Scalar> a, Ac<Scalar> b) {
+        Ac<Scalar> ac;
+        for (unsigned int i=0; i<a.p.size(); i++) ac.p.push_back(a.p[i]);
+        for (unsigned int i=0; i<a.n.size(); i++) ac.n.push_back(a.n[i]);
+        for (unsigned int i=0; i<b.p.size(); i++) ac.p.push_back(b.p[i]);
+        for (unsigned int i=0; i<b.n.size(); i++) ac.n.push_back(b.n[i]);
+        return ac;
+    }
+
+    template <class Scalar>
+    Ac<Scalar> operator -(Ac<Scalar> a, Ac<Scalar> b) {
+        Ac<Scalar> ac;
+        for (unsigned int i=0; i<a.p.size(); i++) ac.p.push_back(a.p[i]);
+        for (unsigned int i=0; i<a.n.size(); i++) ac.n.push_back(a.n[i]);
+        for (unsigned int i=0; i<b.p.size(); i++) ac.n.push_back(-b.p[i]);
+        for (unsigned int i=0; i<b.n.size(); i++) ac.p.push_back(-b.n[i]);
+        return ac;
+    }
+
+    template <class Scalar>
+    Ac<Scalar> operator -(Ac<Scalar> a) {
+        Ac<Scalar> ac;
+        for (unsigned int i=0; i<a.p.size(); i++) ac.n.push_back(-a.p[i]);
+        for (unsigned int i=0; i<a.n.size(); i++) ac.p.push_back(-a.n[i]);
+        return ac;
+    }
+
     
     template<class Scalar>
     Scalar sq( Scalar x) {return x*x;}
@@ -81,11 +226,67 @@ namespace numeric {
         return roots;
     }
     
+    /// solve quadratic eqn: a*x*x + b*x + c = 0
+    /// returns real roots (0, 1, or 2) as vector
+    template<class Scalar>
+    std::vector<Scalar>  quadratic_roots_Ac(
+        Ac<Scalar> &_a,
+        Ac<Scalar> &_b,
+        Ac<Scalar> &_c
+    ) {
+        std::vector<Scalar> roots;
+        Scalar a(chop(_a.get_sum()));
+        Scalar b(chop(_b.get_sum()));
+        Scalar c(_c.get_sum());
+        if ((a == 0) and (b == 0)) {
+            //std::cout << " quadratic_roots() a == b == 0. no roots.\n";
+            return roots;
+        }
+        if (a == 0) {
+            roots.push_back( -c / b );
+            return roots;
+        }
+        if (b == 0) {
+            Scalar sqr = -c / a;
+            if (sqr > 0) {
+                roots.push_back( sqrt(sqr) );
+                roots.push_back( -roots[0] );
+                return roots;
+            } else if (sqr == 0) {
+                roots.push_back( Scalar(0) );
+                return roots;
+            } else {
+                //std::cout << " quadratic_roots() b == 0. no roots.\n";
+                return roots;
+            }
+        }
+        Scalar disc = chop((_b*_b - Scalar(4.)*_a*_c).get_sum()); // discriminant, chop!
+        if (disc > 0) {
+            Scalar q;
+            if (b > 0)
+                q = (b + sqrt(disc)) / -2;
+            else
+                q = (b - sqrt(disc)) / -2;
+            roots.push_back( q / a );
+            roots.push_back( c / q ); 
+            return roots;
+        } else if (disc == 0) {
+            roots.push_back( -b / (2*a) );
+            return roots;
+        }
+        //std::cout << " quadratic_roots() disc < 0. no roots. disc= " << disc << "\n";
+        return roots;
+    }
+    
     template <class Scalar>
     inline Scalar determinant( Scalar a, Scalar b, Scalar c,
                         Scalar d, Scalar e, Scalar f,
                         Scalar g, Scalar h, Scalar i ) {
-        return a*(e*i-h*f)-b*(d*i-g*f)+c*(d*h-g*e);
+        //return a*(e*i-h*f)-b*(d*i-g*f)+c*(d*h-g*e);
+
+        typedef Ac<Scalar> A;
+        A det(a*A(e*i, -h*f) - b*A(d*i, -g*f) + c*A(d*h, -g*e));
+        return det.get_sum();
     }
     
     double diangle(double x, double y);

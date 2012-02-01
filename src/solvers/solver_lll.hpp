@@ -61,9 +61,12 @@ int solve( Site* s1, double k1,
         eq.push_back( sites[i]->eqp_qd( kvals[i] ) );
     
     unsigned int i = 0, j=1, k=2;
-    qd_real d = chop( determinant( eq[i].a, eq[i].b, eq[i].k, 
-                                            eq[j].a, eq[j].b, eq[j].k, 
-                                            eq[k].a, eq[k].b, eq[k].k ) ); 
+    //qd_real d = chop( determinant( eq[i].a, eq[i].b, eq[i].k, 
+    //                                        eq[j].a, eq[j].b, eq[j].k, 
+    //                                        eq[k].a, eq[k].b, eq[k].k ) ); 
+    qd_real d = determinant( eq[i].a, eq[i].b, eq[i].k, 
+                             eq[j].a, eq[j].b, eq[j].k, 
+                             eq[k].a, eq[k].b, eq[k].k ); 
     if (d != 0) {
         qd_real t = determinant(  eq[i].a, eq[i].b, -eq[i].c, 
                                   eq[j].a, eq[j].b, -eq[j].c, 

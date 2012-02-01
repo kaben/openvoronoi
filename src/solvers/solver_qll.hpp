@@ -150,10 +150,29 @@ int qll_solve( qd_real a0, qd_real b0, qd_real c0, qd_real d0,
 {
     //std::cout << "qll_solver()\n";
     // TODO:  optimize using abs(a0) == abs(c0) == abs(d0) == 1
-    qd_real a = chop( (a0*(a1*a1) + c0*(a2*a2) + e0) ); 
-    qd_real b = chop( (2*a0*a1*b1 + 2*a2*b2*c0 + a1*b0 + a2*d0 + f0) ); 
-    qd_real c = a0*(b1*b1) + c0*(b2*b2) + b0*b1 + b2*d0 + g0;
-    std::vector<qd_real> roots = quadratic_roots(a, b, c); // solves a*w^2 + b*w + c = 0
+    //qd_real a = chop( (a0*(a1*a1) + c0*(a2*a2) + e0) ); 
+    //qd_real b = chop( (2*a0*a1*b1 + 2*a2*b2*c0 + a1*b0 + a2*d0 + f0) ); 
+    //qd_real c = a0*(b1*b1) + c0*(b2*b2) + b0*b1 + b2*d0 + g0;
+    Ac<qd_real> a, b, c;
+
+    a+=a0*(a1*a1);
+    a+=c0*(a2*a2);
+    a+=e0; 
+
+    b+=2*a0*a1*b1;
+    b+=2*a2*b2*c0;
+    b+=a1*b0;
+    b+=a2*d0;
+    b+=f0; 
+
+    c+=a0*(b1*b1);
+    c+=c0*(b2*b2);
+    c+=b0*b1;
+    c+=b2*d0;
+    c+=g0;
+
+    //std::vector<qd_real> roots = quadratic_roots(a, b, c); // solves a*w^2 + b*w + c = 0
+    std::vector<qd_real> roots = quadratic_roots_Ac(a, b, c);
     if ( roots.empty() ) { // No roots, no solutions
         return 0;
     } else {

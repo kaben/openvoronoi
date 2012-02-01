@@ -84,20 +84,25 @@ int solve( Site* s1, double k1,
         sv.y = -s1->b();
     }
 
-    double tsln(0);
+    //double tsln(0);
+    typedef Ac<double> A;
+    A tsln;
     if ( s3->isPoint() ) {
-        double dx = s2->x() - s3->x();
-        double dy = s2->y() - s3->y();
-        tsln = -(dx*dx+dy*dy) / (2*( dx*sv.x+dy*sv.y  )); // check for divide-by-zero?
+        //double dx = s2->x() - s3->x();
+        //double dy = s2->y() - s3->y();
+        A dx(s2->x(), -s3->x());
+        A dy(s2->y(), -s3->y());
+        tsln = -(dx*dx+dy*dy) / (2.*( dx*sv.x+dy*sv.y  )).get_sum(); // check for divide-by-zero?
 
     } else if (s3->isLine()) {
-        tsln = -(s3->a()*s2->x()+s3->b()*s2->y()+s3->c()) / ( sv.x*s3->a() + sv.y*s3->b() + k3  );
+        //tsln = -(s3->a()*s2->x()+s3->b()*s2->y()+s3->c()) / ( sv.x*s3->a() + sv.y*s3->b() + k3  );
+        tsln = -A(s3->a()*s2->x(), s3->b()*s2->y(), s3->c()) / A(sv.x*s3->a(), sv.y*s3->b(), k3).get_sum();
     } else {
         assert(0);
         exit(-1);
     }
-    Point psln = Point(s2->x(), s2->y() ) + tsln * sv;
-    slns.push_back( Solution( psln, tsln, k3 ) );
+    Point psln = Point(s2->x(), s2->y() ) + tsln.get_sum() * sv;
+    slns.push_back( Solution( psln, tsln.get_sum(), k3 ) );
     return 1;
 }
 
