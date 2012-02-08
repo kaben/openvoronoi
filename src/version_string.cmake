@@ -11,6 +11,7 @@ find_package(Git)
 if(GIT_FOUND)
     execute_process(
         COMMAND ${GIT_EXECUTABLE} describe --tags 
+        WORKING_DIRECTORY ${OpenVoronoi_SOURCE_DIR}
         RESULT_VARIABLE res_var 
         OUTPUT_VARIABLE GIT_COM_ID 
     )
@@ -42,9 +43,9 @@ set( vstring "//version_string.hpp - written by cmake. changes will be lost!\n"
              "#endif\n"
 )
 
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/version_string.hpp ${vstring} )
+file(WRITE ${OpenVoronoi_BINARY_DIR}/version_string.hpp ${vstring} )
 set_source_files_properties(
-    ${CMAKE_CURRENT_BINARY_DIR}/version_string.hpp
+    ${OpenVoronoi_BINARY_DIR}/version_string.hpp
     PROPERTIES GENERATED TRUE
     HEADER_FILE_ONLY TRUE
 )

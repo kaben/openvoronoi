@@ -78,7 +78,7 @@ execute_process(
 )
 include_directories(${Python_Includes})
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(${OpenVoronoi_BINARY_DIR})
 
 # find BOOST and boost-python
 find_package( Boost COMPONENTS python REQUIRED)
@@ -91,7 +91,7 @@ if(Boost_FOUND)
     MESSAGE(STATUS "Boost_LIBRARIES is: " ${Boost_LIBRARIES})    
 endif()
 
-set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR} ) # Findqd.cmake is in this dir
+set( CMAKE_MODULE_PATH ${OpenVoronoi_SOURCE_DIR} ) # Findqd.cmake is in this dir
 # find the qd library
 find_package( qd REQUIRED )
 include_directories(${QD_INCLUDE_DIR})
@@ -100,7 +100,7 @@ message( STATUS "build type = " ${CMAKE_BUILD_TYPE})
 
 ################ create version_string.hpp, http://stackoverflow.com/questions/3780667
 # include the output directory, where the version_string.hpp file is generated
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(${OpenVoronoi_BINARY_DIR})
 INCLUDE(version_string.cmake)
 STRING(REGEX REPLACE "([0-9][0-9]).*" "\\1" GIT_MAJOR_VERSION "${GIT_COMMIT_ID}" )
 STRING(REGEX REPLACE "[0-9][0-9].([0-9][0-9])-.*" "\\1" GIT_MINOR_VERSION "${GIT_COMMIT_ID}" )
@@ -130,13 +130,14 @@ set( OVD_INCLUDE_FILES
     ${OpenVoronoi_SOURCE_DIR}/vertex_positioner.hpp
     ${OpenVoronoi_SOURCE_DIR}/facegrid.hpp
     
+    ${OpenVoronoi_SOURCE_DIR}/island_filter.hpp
     ${OpenVoronoi_SOURCE_DIR}/offset.hpp
     ${OpenVoronoi_SOURCE_DIR}/offset2.hpp
     ${OpenVoronoi_SOURCE_DIR}/medial_axis.hpp
     ${OpenVoronoi_SOURCE_DIR}/polygon_interior.hpp
     
-    ${CMAKE_CURRENT_BINARY_DIR}/version_string.hpp
-    ${CMAKE_SOURCE_DIR}/version.hpp
+    ${OpenVoronoi_BINARY_DIR}/version_string.hpp
+    ${OpenVoronoi_SOURCE_DIR}/version.hpp
 )
 
 set( OVD_INCLUDE_COMMON_FILES
@@ -256,7 +257,7 @@ MESSAGE(STATUS "Python libraries will be installed to: " ${Python_site_packages}
 
 
 # tests
-include(${CMAKE_SOURCE_DIR}/test/ovd_tests.cmake)
+include(${OpenVoronoi_SOURCE_DIR}/test/ovd_tests.cmake)
 
 # "make package" stuff
 execute_process(
@@ -269,9 +270,9 @@ include(package_details.cmake)
 
 # run the source package generation as a target, so we don't have to do it every time
 add_custom_target(spackage 
-              ${CMAKE_COMMAND} -D SRC_DIR:STRING=${CMAKE_SOURCE_DIR} -D MY_VERSION:STRING=${MY_VERSION} -C ${CMAKE_SOURCE_DIR}/package_details.cmake
-              -P ${CMAKE_CURRENT_SOURCE_DIR}/deb/DebSourcePPA.cmake 
-              #ERROR_QUIET # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+              ${CMAKE_COMMAND} -D SRC_DIR:STRING=${OpenVoronoi_SOURCE_DIR} -D MY_VERSION:STRING=${MY_VERSION} -C ${OpenVoronoi_SOURCE_DIR}/package_details.cmake
+              -P ${OpenVoronoi_SOURCE_DIR}/deb/DebSourcePPA.cmake 
+              #ERROR_QUIET # WORKING_DIRECTORY ${OpenVoronoi_SOURCE_DIR}
             ) # get the changes file as an output from here?
-# -C ${CMAKE_BINARY_DIR}/CMakeCache.txt
+# -C ${OpenVoronoi_BINARY_DIR}/CMakeCache.txt
 include(CPack) # this should be last
