@@ -58,11 +58,14 @@ $ make
 $ sudo make install
 
 Tests
-There are a few python-scrits in src/test/ that can be run with CTest.
-In the build-directory either "make test" or "ctest" will run all tests. 
-You can run only tests that have e.g. "ttt" in the test-name with
-"ctest -R ttt"
-Currently the tests do not produce any output (png or svg output could be an option?)
+There are Python test-scripts and C++ test-subdirectories in src/test/ that
+can be run with CTest.  In the build-directory either "make test" or "ctest"
+will run all tests.  You can run only tests that have e.g. "ttt" in the
+test-name with
+  $ ctest -R ttt
+or
+  $ make test ARGS="-R ttt"
+See the file "src/test/README.txt" for more details.
 
 Organization
 doc/        has documentation in lyx format, with figures in asymptote format. 
