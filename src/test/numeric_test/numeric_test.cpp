@@ -1,0 +1,386 @@
+#include <iostream>
+#include <limits>
+#include <string>
+
+#include "common/numeric.hpp"
+#include "version.hpp"
+
+using namespace std;
+
+
+// Convenience macro to output function name, file name, line number, and
+// expression when expression evaluates to false. When false, increments
+// fail-count of status argument "s".
+#define check(expr, s) do { \
+  if(!(expr)) { \
+    s.fail(); \
+    cout<<__func__<<":" __FILE__ ":"<<__LINE__<<": "<< #expr <<endl; \
+  } else { s.pass(); } \
+} while (0)
+
+// Convenience class to track checks and fails during testing.
+struct Status {
+    unsigned int cases, errors;
+    Status();
+    void pass();
+    void fail();
+    void operator +=(const Status& s);
+};
+Status::Status(): cases(0), errors(0) {}
+void Status::pass() { cases++; }
+void Status::fail() { cases++; errors++; }
+void Status::operator +=(const Status& s) {
+    cases += s.cases;
+    errors += s.errors;
+}
+
+
+// Test cases to verify adding things to the accumulator.
+template <class Scalar>
+Status test_specialized_Ac_add() {
+    Status s;
+    {
+        ovd::numeric::Ac<Scalar> a;
+        a.add(3);
+        // Verify accumulator sizes.
+        check(1 == a.p.size(), s);
+        check(0 == a.n.size(), s);
+        // Verify positive accumulator was used.
+        check(3 == a.p[0], s);
+    }{
+        ovd::numeric::Ac<Scalar> a;
+        a.add(-3);
+        // Verify accumulator sizes.
+        check(0 == a.p.size(), s);
+        check(1 == a.n.size(), s);
+        // Verify negative accumulator was used.
+        check(-3 == a.n[0], s);
+    }
+    return s;
+}
+Status test_Ac_add() {
+    Status s;
+    s += test_specialized_Ac_add<float>();
+    s += test_specialized_Ac_add<double>();
+    s += test_specialized_Ac_add<long double>();
+    s += test_specialized_Ac_add<qd_real>();
+    return s;
+}
+
+
+// A testing-addition policy to verify order of summation in accumulator
+// class.
+template <class T>
+struct MonitorAddition {
+    std::vector<T> plus_operands;
+    std::vector<T> plus_eq_operands;
+    T plus(const T& a, const T& b) {
+        plus_operands.push_back(a);
+        plus_operands.push_back(b);
+        return a + b;
+    }
+    void plus_eq(T& a, const T& b) {
+        plus_eq_operands.push_back(a);
+        plus_eq_operands.push_back(b);
+        a += b;
+    }
+};
+// Test cases to verify accumulator summation.
+template <class Scalar>
+Status test_specialized_Ac_sum() {
+    Status s;
+    {
+        ovd::numeric::Ac<Scalar> a;
+        a.add(3);
+        // Verify sum.
+        check(3 == a.sum(), s);
+        // Verify accumulator sizes.
+        check(1 == a.p.size(), s);
+        check(0 == a.n.size(), s);
+        // Verify correct accumulator was used.
+        check(3 == a.p[0], s);
+    }{
+        ovd::numeric::Ac<Scalar> a;
+        a.add(-3);
+        // Verify sum.
+        check(-3 == a.sum(), s);
+        // Verify accumulator sizes.
+        check(0 == a.p.size(), s);
+        check(1 == a.n.size(), s);
+        // Verify correct accumulator was used.
+        check(-3 == a.n[0], s);
+    }{
+        ovd::numeric::Ac<Scalar> a;
+        a.add(3);
+        a.add(-3);
+        // Verify sum.
+        check(0 == a.sum(), s);
+        // Verify accumulator sizes.
+        check(1 == a.p.size(), s);
+        check(1 == a.n.size(), s);
+        // Verify correct accumulators were used.
+        check(3 == a.p[0], s);
+        check(-3 == a.n[0], s);
+    }{
+        ovd::numeric::Ac<Scalar, MonitorAddition> a;
+        a.add(3);
+        a.add(-3);
+        // Verify accumulator sizes and contents.
+        check(1 == a.p.size(), s);
+        check(1 == a.n.size(), s);
+        check(3 == a.p[0], s);
+        check(-3 == a.n[0], s);
+        // Verify sum.
+        check(0 == a.sum(), s);
+        // Verify order of summation.
+        check(0 == a.plus_operands.size(), s);
+        check(4 == a.plus_eq_operands.size(), s);
+        check(0 == a.plus_eq_operands[0], s);
+        check(3 == a.plus_eq_operands[1], s);
+        check(0 == a.plus_eq_operands[2], s);
+        check(-3 == a.plus_eq_operands[3], s);
+        // Verify accumulator sizes are unchanged.
+        check(1 == a.p.size(), s);
+        check(1 == a.n.size(), s);
+        // Verify accumulators contents are unchanged.
+        check(3 == a.p[0], s);
+        check(-3 == a.n[0], s);
+    }{
+        ovd::numeric::Ac<Scalar, MonitorAddition> a;
+        a.add(5);
+        a.add(-3);
+        // Verify accumulator sizes and contents.
+        check(1 == a.p.size(), s);
+        check(1 == a.n.size(), s);
+        check(5 == a.p[0], s);
+        check(-3 == a.n[0], s);
+        // Verify sum.
+        check(2 == a.sum(), s);
+        // Verify order of summation.
+        check(0 == a.plus_operands.size(), s);
+        check(4 == a.plus_eq_operands.size(), s);
+        check(0 == a.plus_eq_operands[0], s);
+        check(5 == a.plus_eq_operands[1], s);
+        check(0 == a.plus_eq_operands[2], s);
+        check(-3 == a.plus_eq_operands[3], s);
+        // Verify accumulator sizes are unchanged.
+        check(1 == a.p.size(), s);
+        check(1 == a.n.size(), s);
+        // Verify accumulators contents are unchanged.
+        check(5 == a.p[0], s);
+        check(-3 == a.n[0], s);
+    }{
+        ovd::numeric::Ac<Scalar, MonitorAddition> a;
+        a.add(-5);
+        a.add(3);
+        // Verify accumulator sizes and contents.
+        check(1 == a.p.size(), s);
+        check(1 == a.n.size(), s);
+        check(3 == a.p[0], s);
+        check(-5 == a.n[0], s);
+        // Verify sum.
+        check(-2 == a.sum(), s);
+        // Verify order of summation.
+        check(0 == a.plus_operands.size(), s);
+        check(4 == a.plus_eq_operands.size(), s);
+        check(0 == a.plus_eq_operands[0], s);
+        check(3 == a.plus_eq_operands[1], s);
+        check(0 == a.plus_eq_operands[2], s);
+        check(-5 == a.plus_eq_operands[3], s);
+        // Verify accumulator sizes are unchanged.
+        check(1 == a.p.size(), s);
+        check(1 == a.n.size(), s);
+        // Verify accumulators contents are unchanged.
+        check(3 == a.p[0], s);
+        check(-5 == a.n[0], s);
+    }
+    return s;
+}
+Status test_Ac_sum() {
+    Status s;
+    s += test_specialized_Ac_sum<float>();
+    s += test_specialized_Ac_sum<double>();
+    s += test_specialized_Ac_sum<long double>();
+    s += test_specialized_Ac_sum<qd_real>();
+    return s;
+}
+
+
+// Test cases to verify accumulator constructors.
+template <class Scalar>
+Status test_specialized_Ac_constructors() {
+    Status s;
+    {
+        ovd::numeric::Ac<Scalar> a;
+        // Verify accumulator sizes.
+        check(0 == a.p.size(), s);
+        check(0 == a.n.size(), s);
+    }{
+        ovd::numeric::Ac<Scalar> a(1);
+        // Verify accumulator sizes.
+        check(1 == a.p.size(), s);
+        check(0 == a.n.size(), s);
+        // Verify correct accumulator was used.
+        check(Scalar(1) == a.p[0], s);
+    }{
+        ovd::numeric::Ac<Scalar> a(-1);
+        // Verify accumulator sizes.
+        check(0 == a.p.size(), s);
+        check(1 == a.n.size(), s);
+        // Verify correct accumulator was used.
+        check(Scalar(-1) == a.n[0], s);
+    }{
+        ovd::numeric::Ac<Scalar> a(1,-2);
+        // Verify accumulator sizes.
+        check(1 == a.p.size(), s);
+        check(1 == a.n.size(), s);
+        // Verify correct accumulators were used.
+        check(Scalar(1) == a.p[0], s);
+        check(Scalar(-2) == a.n[0], s);
+    }{
+        ovd::numeric::Ac<Scalar> a(-1,2);
+        // Verify accumulator sizes.
+        check(1 == a.p.size(), s);
+        check(1 == a.n.size(), s);
+        // Verify correct accumulators were used.
+        check(Scalar(2) == a.p[0], s);
+        check(Scalar(-1) == a.n[0], s);
+    }{
+        ovd::numeric::Ac<Scalar> a(-1,2,-3);
+        // Verify accumulator sizes.
+        check(1 == a.p.size(), s);
+        check(2 == a.n.size(), s);
+        // Verify accumulators were used in correct order.
+        check(Scalar(2) == a.p[0], s);
+        check(Scalar(-1) == a.n[0], s);
+        check(Scalar(-3) == a.n[1], s);
+    }{
+        ovd::numeric::Ac<Scalar> a(-1,2,-3,5);
+        // Verify accumulator sizes.
+        check(2 == a.p.size(), s);
+        check(2 == a.n.size(), s);
+        // Verify accumulators were used in correct order.
+        check(Scalar(2) == a.p[0], s);
+        check(Scalar(5) == a.p[1], s);
+        check(Scalar(-1) == a.n[0], s);
+        check(Scalar(-3) == a.n[1], s);
+    }{
+        ovd::numeric::Ac<Scalar> a(-1,2,-3,5,-7);
+        // Verify accumulator sizes.
+        check(2 == a.p.size(), s);
+        check(3 == a.n.size(), s);
+        // Verify accumulators were used in correct order.
+        check(Scalar(2) == a.p[0], s);
+        check(Scalar(5) == a.p[1], s);
+        check(Scalar(-1) == a.n[0], s);
+        check(Scalar(-3) == a.n[1], s);
+        check(Scalar(-7) == a.n[2], s);
+    }{
+        ovd::numeric::Ac<Scalar> a(-1,2,-3,5,-7,11);
+        // Verify accumulator sizes.
+        check(3 == a.p.size(), s);
+        check(3 == a.n.size(), s);
+        // Verify accumulators were used in correct order.
+        check(Scalar(2) == a.p[0], s);
+        check(Scalar(5) == a.p[1], s);
+        check(Scalar(11) == a.p[2], s);
+        check(Scalar(-1) == a.n[0], s);
+        check(Scalar(-3) == a.n[1], s);
+        check(Scalar(-7) == a.n[2], s);
+    }
+    return s;
+}
+Status test_Ac_constructors() {
+    Status s;
+    s += test_specialized_Ac_constructors<float>();
+    s += test_specialized_Ac_constructors<double>();
+    s += test_specialized_Ac_constructors<long double>();
+    s += test_specialized_Ac_constructors<qd_real>();
+    return s;
+}
+
+
+// Brainstorming...
+template <class Scalar>
+Status limits() {
+    Status s;
+    numeric_limits<Scalar> x;
+    cout << "x.min(): " << x.min() << endl;
+    cout << "x.max(): " << x.max() << endl;
+    cout << "x.digits: " << x.digits << endl;
+    cout << "x.digits10: " << x.digits10 << endl;
+    cout << "x.is_signed: " << x.is_signed << endl;
+    cout << "x.is_integer: " << x.is_integer << endl;
+    cout << "x.is_exact: " << x.is_exact << endl;
+    cout << "x.radix: " << x.radix << endl;
+    cout << "x.epsilon(): " << x.epsilon() << endl;
+    cout << "x.round_error(): " << x.round_error() << endl;
+    cout << "x.min_exponent: " << x.min_exponent << endl;
+    cout << "x.min_exponent10: " << x.min_exponent10 << endl;
+    cout << "x.max_exponent: " << x.max_exponent << endl;
+    cout << "x.max_exponent10: " << x.max_exponent10 << endl;
+    cout << "x.has_infinity: " << x.has_infinity << endl;
+    cout << "x.has_quiet_NaN: " << x.has_quiet_NaN << endl;
+    cout << "x.has_signaling_NaN: " << x.has_signaling_NaN << endl;
+    cout << "x.has_denorm: ";
+    switch (x.has_denorm) {
+      case denorm_indeterminate: cout << "denorm_indeterminate"; break;
+      case denorm_absent: cout << "denorm_absent"; break;
+      case denorm_present: cout << "denorm_present"; break;
+      default: cout << "unknown"; break;
+    }
+    cout << endl;
+    cout << "x.has_denorm_loss: " << x.has_denorm_loss << endl;
+    cout << "x.infinity(): " << x.infinity() << endl;
+    cout << "x.quiet_NaN(): " << x.quiet_NaN() << endl;
+    cout << "x.signaling_NaN(): " << x.signaling_NaN() << endl;
+    cout << "x.denorm_min(): " << x.denorm_min() << endl;
+    cout << "x.is_iec559: " << x.is_iec559 << endl;
+    cout << "x.is_bounded: " << x.is_bounded << endl;
+    cout << "x.is_modulo: " << x.is_modulo << endl;
+    cout << "x.traps: " << x.traps << endl;
+    cout << "x.tinyness_before: " << x.tinyness_before << endl;
+    cout << "x.round_style: ";
+    switch (x.round_style) {
+      case round_toward_zero: cout << "round_toward_zero"; break;
+      case round_to_nearest: cout << "round_to_nearest"; break;
+      case round_toward_infinity: cout << "round_toward_infinity"; break;
+      case round_toward_neg_infinity: cout << "round_toward_neg_infinity"; break;
+      case round_indeterminate: cout << "round_indeterminate"; break;
+      default: cout << "unknown"; break;
+    }
+    cout << endl;
+    //Scalar c0+e = a+b = c;
+    // e = c-(a+b)
+    Scalar a(2.), b(x.epsilon()), c0(a+b);
+    Scalar e;
+    e = c0;
+    e -= a;
+    e -= b;
+    cout << "e: " << e << endl;
+
+    ovd::numeric::Ac<Scalar> c(a, b);
+    c -= a;
+    c -= b;
+    return s;
+}
+Status brainstorm() {
+    Status s;
+    cout << "float:" << endl;
+    limits<float>();
+    cout << endl;
+    return s;
+}
+
+
+int main(int argc, char **argv) {
+    Status s;
+    std::cout << ovd::version() << "\n"; // the git revision-string
+    s += test_Ac_add();
+    s += test_Ac_sum();
+    s += test_Ac_constructors();
+    s += brainstorm();
+    // Say how many checks were performed, and how many failed.
+    cout << s.cases << " checks, " << s.errors << " errors." << endl;
+    return bool(s.errors);
+}

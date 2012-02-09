@@ -28,6 +28,9 @@ tell CTest about new test scripts by adding something like the following to
 "src/test/ovd_tests.cmake", in the "Python tests" section:
   ADD_TEST(<test name> python ../src/test/<test file>.py)
 
+Don't forget to git add (I almost always forget):
+  $ git add "src/test/<test file>.py"
+
 
 Adding new C++ tests
 C++ tests are also easy to write: an "int main()" function returns "0" for
@@ -45,6 +48,10 @@ The easiest way to add a C++ test is to make a copy of the template
 
 and then edit "<test name>_test/CMakeLists.txt", replacing the word
 "test_sandbox" with the name of the new test.
+
+Don't forget to git add:
+  $ git add "src/test/<test name>_test/CMakeLists.txt"
+  $ git add "src/test/<test name>_test/*.cpp"
 
 
 Hints

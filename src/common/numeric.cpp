@@ -109,6 +109,233 @@ namespace numeric {
             return mid;
         }
     }
+
+    //template <class T> Ac<T>::Ac(const Ac<T> &a): p(a.p), n(a.n) {}
+    //template <class T> Ac<T>::Ac() {}
+    //template <class T> Ac<T>::Ac(const T &d0)
+    //{ add(d0); }
+    //template <class T> Ac<T>::Ac(const T &d0, const T &d1)
+    //{ add(d0); add(d1); }
+    //template <class T> Ac<T>::Ac(const T &d0, const T &d1, const T &d2)
+    //{ add(d0); add(d1); add(d2); }
+
+    //template <> Ac<float>::Ac(const Ac<float> &a)
+    //: p(a.p), n(a.n) {}
+    //template <> Ac<float>::Ac() {}
+    //template <> Ac<float>::Ac(
+    //    const float &d0
+    //){ add(d0); }
+    //template <> Ac<float>::Ac(
+    //    const float &d0,
+    //    const float &d1
+    //){ add(d0); add(d1); }
+    //template <> Ac<float>::Ac(
+    //    const float &d0,
+    //    const float &d1,
+    //    const float &d2
+    //){ add(d0); add(d1); add(d2); }
+    //template <> Ac<float>::Ac(
+    //    const float &d0,
+    //    const float &d1,
+    //    const float &d2,
+    //    const float &d3
+    //){ add(d0); add(d1); add(d2); add(d3); }
+    //template <> Ac<float>::Ac(
+    //    const float &d0,
+    //    const float &d1,
+    //    const float &d2,
+    //    const float &d3,
+    //    const float &d4
+    //){ add(d0); add(d1); add(d2); add(d3); add(d4); }
+    //template <> Ac<float>::Ac(
+    //    const float &d0,
+    //    const float &d1,
+    //    const float &d2,
+    //    const float &d3,
+    //    const float &d4,
+    //    const float &d5
+    //){ add(d0); add(d1); add(d2); add(d3); add(d4); add(d5); }
+    //template <> Ac<float>::Ac(
+    //    const float &d0,
+    //    const float &d1,
+    //    const float &d2,
+    //    const float &d3,
+    //    const float &d4,
+    //    const float &d5,
+    //    const float &d6
+    //){ add(d0); add(d1); add(d2); add(d3); add(d4); add(d5); add(d6); }
+
+    //template <> Ac<double>::Ac(const Ac<double> &a)
+    //: p(a.p), n(a.n) {}
+    //template <> Ac<double>::Ac() {}
+    //template <> Ac<double>::Ac(
+    //    const double &d0
+    //){ add(d0); }
+    //template <> Ac<double>::Ac(
+    //    const double &d0,
+    //    const double &d1
+    //){ add(d0); add(d1); }
+    //template <> Ac<double>::Ac(
+    //    const double &d0,
+    //    const double &d1,
+    //    const double &d2
+    //){ add(d0); add(d1); add(d2); }
+    //template <> Ac<double>::Ac(
+    //    const double &d0,
+    //    const double &d1,
+    //    const double &d2,
+    //    const double &d3
+    //){ add(d0); add(d1); add(d2); add(d3); }
+    //template <> Ac<double>::Ac(
+    //    const double &d0,
+    //    const double &d1,
+    //    const double &d2,
+    //    const double &d3,
+    //    const double &d4
+    //){ add(d0); add(d1); add(d2); add(d3); add(d4); }
+    //template <> Ac<double>::Ac(
+    //    const double &d0,
+    //    const double &d1,
+    //    const double &d2,
+    //    const double &d3,
+    //    const double &d4,
+    //    const double &d5
+    //){ add(d0); add(d1); add(d2); add(d3); add(d4); add(d5); }
+    //template <> Ac<double>::Ac(
+    //    const double &d0,
+    //    const double &d1,
+    //    const double &d2,
+    //    const double &d3,
+    //    const double &d4,
+    //    const double &d5,
+    //    const double &d6
+    //){ add(d0); add(d1); add(d2); add(d3); add(d4); add(d5); add(d6); }
+
+    //template <> Ac<long double>::Ac(const Ac<long double> &a)
+    //: p(a.p), n(a.n) {}
+    //template <> Ac<long double>::Ac() {}
+    //template <> Ac<long double>::Ac(
+    //    const long double &d0
+    //){ add(d0); }
+    //template <> Ac<long double>::Ac(
+    //    const long double &d0,
+    //    const long double &d1
+    //){ add(d0); add(d1); }
+    //template <> Ac<long double>::Ac(
+    //    const long double &d0,
+    //    const long double &d1,
+    //    const long double &d2
+    //){ add(d0); add(d1); add(d2); }
+    //template <> Ac<long double>::Ac(
+    //    const long double &d0,
+    //    const long double &d1,
+    //    const long double &d2,
+    //    const long double &d3
+    //){ add(d0); add(d1); add(d2); add(d3); }
+    //template <> Ac<long double>::Ac(
+    //    const long double &d0,
+    //    const long double &d1,
+    //    const long double &d2,
+    //    const long double &d3,
+    //    const long double &d4
+    //){ add(d0); add(d1); add(d2); add(d3); add(d4); }
+    //template <> Ac<long double>::Ac(
+    //    const long double &d0,
+    //    const long double &d1,
+    //    const long double &d2,
+    //    const long double &d3,
+    //    const long double &d4,
+    //    const long double &d5
+    //){ add(d0); add(d1); add(d2); add(d3); add(d4); add(d5); }
+    //template <> Ac<long double>::Ac(
+    //    const long double &d0,
+    //    const long double &d1,
+    //    const long double &d2,
+    //    const long double &d3,
+    //    const long double &d4,
+    //    const long double &d5,
+    //    const long double &d6
+    //){ add(d0); add(d1); add(d2); add(d3); add(d4); add(d5); add(d6); }
+
+    //template <> Ac<qd_real>::Ac(const Ac<qd_real> &a)
+    //: p(a.p), n(a.n) {}
+    //template <> Ac<qd_real>::Ac() {}
+    //template <> Ac<qd_real>::Ac(
+    //    const qd_real &d0
+    //){ add(d0); }
+    //template <> Ac<qd_real>::Ac(
+    //    const qd_real &d0,
+    //    const qd_real &d1
+    //){ add(d0); add(d1); }
+    //template <> Ac<qd_real>::Ac(
+    //    const qd_real &d0,
+    //    const qd_real &d1,
+    //    const qd_real &d2
+    //){ add(d0); add(d1); add(d2); }
+    //template <> Ac<qd_real>::Ac(
+    //    const qd_real &d0,
+    //    const qd_real &d1,
+    //    const qd_real &d2,
+    //    const qd_real &d3
+    //){ add(d0); add(d1); add(d2); add(d3); }
+    //template <> Ac<qd_real>::Ac(
+    //    const qd_real &d0,
+    //    const qd_real &d1,
+    //    const qd_real &d2,
+    //    const qd_real &d3,
+    //    const qd_real &d4
+    //){ add(d0); add(d1); add(d2); add(d3); add(d4); }
+    //template <> Ac<qd_real>::Ac(
+    //    const qd_real &d0,
+    //    const qd_real &d1,
+    //    const qd_real &d2,
+    //    const qd_real &d3,
+    //    const qd_real &d4,
+    //    const qd_real &d5
+    //){ add(d0); add(d1); add(d2); add(d3); add(d4); add(d5); }
+    //template <> Ac<qd_real>::Ac(
+    //    const qd_real &d0,
+    //    const qd_real &d1,
+    //    const qd_real &d2,
+    //    const qd_real &d3,
+    //    const qd_real &d4,
+    //    const qd_real &d5,
+    //    const qd_real &d6
+    //){ add(d0); add(d1); add(d2); add(d3); add(d4); add(d5); add(d6); }
+
+    //template<> void Ac<float>::clear() {
+    //    p = std::vector<float>();
+    //    n = std::vector<float>();
+    //}
+    //template<> void Ac<double>::clear() {
+    //    p = std::vector<double>();
+    //    n = std::vector<double>();
+    //}
+    //template<> void Ac<long double>::clear() {
+    //    p = std::vector<long double>();
+    //    n = std::vector<long double>();
+    //}
+    //template<> void Ac<qd_real>::clear() {
+    //    p = std::vector<qd_real>();
+    //    n = std::vector<qd_real>();
+    //}
+
+    //template<> void Ac<float>::add(const float &d) {
+    //    if (d<0) n.push_back(d);
+    //    else p.push_back(d);
+    //}
+    //template<> void Ac<double>::add(const double &d) {
+    //    if (d<0) n.push_back(d);
+    //    else p.push_back(d);
+    //}
+    //template<> void Ac<long double>::add(const long double &d) {
+    //    if (d<0) n.push_back(d);
+    //    else p.push_back(d);
+    //}
+    //template<> void Ac<qd_real>::add(const qd_real &d) {
+    //    if (d<0) n.push_back(d);
+    //    else p.push_back(d);
+    //}
 } // numeric
 } // ovd
 
