@@ -887,6 +887,58 @@ Status test_operator_star_T_Ac() {
 }
 
 
+// Test cases to verify operator*(Ac<T>&, Ac<T>&).
+template <class Scalar>
+Status test_specialized_operator_star_Ac_Ac() {
+    Status s;
+    {
+        ovd::numeric::Ac<Scalar> a;
+        a.add(11);
+        a.add(-7);
+        a.add(2);
+        ovd::numeric::Ac<Scalar> b;
+        b.add(3);
+        b.add(-13);
+        b.add(-5);
+        ovd::numeric::Ac<Scalar> result = a*b;
+        // Verify result accumulator sizes.
+        check(4 == result.p.size(), s);
+        check(5 == result.n.size(), s);
+        // Verify result accumulator contents.
+        check(11*3 == result.p[0], s);
+        check(2*3 == result.p[1], s);
+        check((-7)*3 == result.n[0], s);
+        check(11*(-13) == result.n[1], s);
+        check(11*(-5) == result.n[2], s);
+        check(2*(-13) == result.n[3], s);
+        check(2*(-5) == result.n[4], s);
+        check((-7)*(-13) == result.p[2], s);
+        check((-7)*(-5) == result.p[3], s);
+        // Verify "a" is unaltered.
+        check(2 == a.p.size(), s);
+        check(1 == a.n.size(), s);
+        check(11 == a.p[0], s);
+        check(-7 == a.n[0], s);
+        check(2 == a.p[1], s);
+        // Verify "b" is unaltered.
+        check(1 == b.p.size(), s);
+        check(2 == b.n.size(), s);
+        check(3 == b.p[0], s);
+        check(-13 == b.n[0], s);
+        check(-5 == b.n[1], s);
+    }
+    return s;
+}
+Status test_operator_star_Ac_Ac() {
+    Status s;
+    s += test_specialized_operator_star_Ac_Ac<float>();
+    s += test_specialized_operator_star_Ac_Ac<double>();
+    s += test_specialized_operator_star_Ac_Ac<long double>();
+    s += test_specialized_operator_star_Ac_Ac<qd_real>();
+    return s;
+}
+
+
 // Brainstorming...
 template <class Scalar>
 Status limits() {
@@ -977,6 +1029,7 @@ int main(int argc, char **argv) {
     s += test_product();
     s += test_operator_star_Ac_T();
     s += test_operator_star_T_Ac();
+    s += test_operator_star_Ac_Ac();
     s += brainstorm();
     // Say how many checks were performed, and how many failed.
     cout << s.cases << " checks, " << s.errors << " errors." << endl;
