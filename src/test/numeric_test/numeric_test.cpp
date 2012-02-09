@@ -135,11 +135,11 @@ Status test_Ac_Ac_plus_eq() {
 }
 
 
-// Test cases to verify adding via -=.
+// Test cases to verify subtracting via -=.
 template <class Scalar>
 Status test_specialized_Ac_scalar_minus_eq() {
     Status s;
-    { // Verify behavior when adding positive scalar.
+    { // Verify behavior when subtracting negative scalar.
         ovd::numeric::Ac<Scalar> a;
         a-=-3;
         // Verify accumulator sizes.
@@ -147,7 +147,7 @@ Status test_specialized_Ac_scalar_minus_eq() {
         check(0 == a.n.size(), s);
         // Verify positive accumulator was used.
         check(3 == a.p[0], s);
-    }{ // Verify behavior when adding negative scalar.
+    }{ // Verify behavior when adding positive scalar.
         ovd::numeric::Ac<Scalar> a;
         a-=3;
         // Verify accumulator sizes.
@@ -164,6 +164,41 @@ Status test_Ac_scalar_minus_eq() {
     s += test_specialized_Ac_scalar_minus_eq<double>();
     s += test_specialized_Ac_scalar_minus_eq<long double>();
     s += test_specialized_Ac_scalar_minus_eq<qd_real>();
+    return s;
+}
+
+
+// Test cases to verify subtracting Ac via -=.
+template <class Scalar>
+Status test_specialized_Ac_Ac_minus_eq() {
+    Status s;
+    { // Verify behavior when subtracting negative Ac.
+        ovd::numeric::Ac<Scalar> a;
+        ovd::numeric::Ac<Scalar> b(-3);
+        a-=b;
+        // Verify accumulator sizes.
+        check(1 == a.p.size(), s);
+        check(0 == a.n.size(), s);
+        // Verify positive accumulator was used.
+        check(3 == a.p[0], s);
+    }{ // Verify behavior when subtracting positive Ac.
+        ovd::numeric::Ac<Scalar> a;
+        ovd::numeric::Ac<Scalar> b(3);
+        a-=3;
+        // Verify accumulator sizes.
+        check(0 == a.p.size(), s);
+        check(1 == a.n.size(), s);
+        // Verify negative accumulator was used.
+        check(-3 == a.n[0], s);
+    }
+    return s;
+}
+Status test_Ac_Ac_minus_eq() {
+    Status s;
+    s += test_specialized_Ac_Ac_minus_eq<float>();
+    s += test_specialized_Ac_Ac_minus_eq<double>();
+    s += test_specialized_Ac_Ac_minus_eq<long double>();
+    s += test_specialized_Ac_Ac_minus_eq<qd_real>();
     return s;
 }
 
@@ -390,7 +425,6 @@ Status test_specialized_Ac_split_sum() {
         check(5 == a.p[0], s);
         check(3 == a.p[1], s);
         // Verify split sum.
-        a.plus_eq_operands.clear();
         Scalar pos, neg;
         a.sum(pos, neg);
         check(8 == pos, s);
@@ -417,7 +451,6 @@ Status test_specialized_Ac_split_sum() {
         check(-5 == a.n[0], s);
         check(-3 == a.n[1], s);
         // Verify split sum.
-        a.plus_eq_operands.clear();
         Scalar pos, neg;
         a.sum(pos, neg);
         check(0 == pos, s);
@@ -452,7 +485,6 @@ Status test_specialized_Ac_split_sum() {
         check(-13 == a.n[1], s);
         check(-2 == a.n[2], s);
         // Verify split sum.
-        a.plus_eq_operands.clear();
         Scalar pos, neg;
         a.sum(pos, neg);
         check(21 == pos, s);
@@ -607,11 +639,11 @@ Status test_Ac_constructors() {
 }
 
 
-// Test cases to verify assignment operator.
+// Test cases to verify Ac assignment operator.
 template <class Scalar>
 Status test_specialized_Ac_Ac_assignment() {
     Status s;
-    { // Verify copy constructor.
+    { // Verify Ac assignment operator.
         ovd::numeric::Ac<Scalar> a;
         a.p.push_back(11);
         a.p.push_back(2);
@@ -639,6 +671,38 @@ Status test_Ac_Ac_assignment() {
     s += test_specialized_Ac_Ac_assignment<double>();
     s += test_specialized_Ac_Ac_assignment<long double>();
     s += test_specialized_Ac_Ac_assignment<qd_real>();
+    return s;
+}
+
+
+// Test cases to verify scalar assignment operator.
+template <class Scalar>
+Status test_specialized_Ac_scalar_assignment() {
+    Status s;
+    { // Verify assignment of positive scalar.
+        ovd::numeric::Ac<Scalar> b = Scalar(5);
+        // Verify accumulator sizes.
+        check(1 == b.p.size(), s);
+        check(0 == b.n.size(), s);
+        // Verify accumulator contents.
+        check(5 == b.p[0], s);
+    }
+    { // Verify assignment of negative scalar.
+        ovd::numeric::Ac<Scalar> b = Scalar(-5);
+        // Verify accumulator sizes.
+        check(0 == b.p.size(), s);
+        check(1 == b.n.size(), s);
+        // Verify accumulator contents.
+        check(-5 == b.n[0], s);
+    }
+    return s;
+}
+Status test_Ac_scalar_assignment() {
+    Status s;
+    s += test_specialized_Ac_scalar_assignment<float>();
+    s += test_specialized_Ac_scalar_assignment<double>();
+    s += test_specialized_Ac_scalar_assignment<long double>();
+    s += test_specialized_Ac_scalar_assignment<qd_real>();
     return s;
 }
 
@@ -689,10 +753,10 @@ Status test_specialized_Ac_clear() {
 }
 Status test_Ac_clear() {
     Status s;
-    s += test_specialized_Ac_Ac_assignment<float>();
-    s += test_specialized_Ac_Ac_assignment<double>();
-    s += test_specialized_Ac_Ac_assignment<long double>();
-    s += test_specialized_Ac_Ac_assignment<qd_real>();
+    s += test_specialized_Ac_clear<float>();
+    s += test_specialized_Ac_clear<double>();
+    s += test_specialized_Ac_clear<long double>();
+    s += test_specialized_Ac_clear<qd_real>();
     return s;
 }
 
@@ -777,10 +841,13 @@ int main(int argc, char **argv) {
     s += test_Ac_scalar_plus_eq();
     s += test_Ac_Ac_plus_eq();
     s += test_Ac_scalar_minus_eq();
+    s += test_Ac_Ac_minus_eq();
     s += test_Ac_sum();
     s += test_Ac_split_sum();
     s += test_Ac_constructors();
     s += test_Ac_Ac_assignment();
+    s += test_Ac_scalar_assignment();
+    s += test_Ac_clear();
     s += brainstorm();
     // Say how many checks were performed, and how many failed.
     cout << s.cases << " checks, " << s.errors << " errors." << endl;
