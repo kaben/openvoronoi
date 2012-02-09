@@ -42,16 +42,13 @@ namespace numeric {
     // class. A testing-addition policy can be used to verify order of
     // summation.
     template <class T>
-    struct SimpleAddition {
+    struct SimpleAdd {
         T plus(const T& a, const T& b) { return a + b; }
         void plus_eq(T& a, const T& b) { a += b; }
     };
 
-    template
-    <   class Scalar,
-        template <class> class AdditionPolicy = SimpleAddition
-    >
-    struct Ac : AdditionPolicy<Scalar> {
+    template <class Scalar, template <class> class AddPolicy = SimpleAdd>
+    struct Ac : AddPolicy<Scalar> {
         std::vector<Scalar> p, n;
         // Copy constructor.
         Ac(const Ac &a): p(a.p), n(a.n) {}
@@ -64,24 +61,16 @@ namespace numeric {
         { add(d0); add(d1); }
         Ac(const Scalar &d0, const Scalar &d1, const Scalar &d2)
         { add(d0); add(d1); add(d2); }
-        Ac(const Scalar &d0,
-           const Scalar &d1,
-           const Scalar &d2,
+        Ac(const Scalar &d0, const Scalar &d1, const Scalar &d2,
            const Scalar &d3
         ){ add(d0); add(d1); add(d2); add(d3); }
-        Ac(const Scalar &d0,
-           const Scalar &d1,
-           const Scalar &d2,
-           const Scalar &d3,
-           const Scalar &d4
+        Ac(const Scalar &d0, const Scalar &d1, const Scalar &d2,
+           const Scalar &d3, const Scalar &d4
         ){ add(d0); add(d1); add(d2); add(d3); add(d4); }
-        Ac(const Scalar &d0,
-           const Scalar &d1,
-           const Scalar &d2,
-           const Scalar &d3,
-           const Scalar &d4,
-           const Scalar &d5
+        Ac(const Scalar &d0, const Scalar &d1, const Scalar &d2,
+           const Scalar &d3, const Scalar &d4, const Scalar &d5
         ){ add(d0); add(d1); add(d2); add(d3); add(d4); add(d5); }
+
         void clear() {
             p = std::vector<Scalar>();
             n = std::vector<Scalar>();
@@ -95,19 +84,14 @@ namespace numeric {
             sort(p.begin(), p.end());
             sort(n.begin(), n.end());
             reverse(n.begin(), n.end());
-            for (unsigned int i=0; i<p.size(); i++) {
-                plus_eq(pos, p[i]);
-            }
-            for (unsigned int i=0; i<n.size(); i++) {
-                plus_eq(neg, n[i]);
-            }
+            for (unsigned int i=0; i<p.size(); i++) { plus_eq(pos, p[i]); }
+            for (unsigned int i=0; i<n.size(); i++) { plus_eq(neg, n[i]); }
         }
         Scalar sum() {
             Scalar pos(0), neg(0);
             sum(pos, neg);
             return pos + neg;
         }
-        //operator Scalar() { return sum(); }
         void operator +=(const Scalar &d) { add(d); }
         void operator +=(const Ac &a) {
             for (unsigned int i=0; i<a.p.size(); i++) p.push_back(p[i]);
@@ -121,14 +105,13 @@ namespace numeric {
         void operator =(const Scalar &d) { clear(); add(d); }
         void operator =(const Ac &a) { p = a.p; n = a.n; }
     };
-    
+
     template <class Scalar>
     void prod(std::vector<Scalar> &a, std::vector<Scalar> &b, Ac<Scalar> &result) {
         for (unsigned int i=0; i<a.size(); i++)
             for (unsigned int j=0; j<b.size(); j++)
                 result.add(a[i]*b[j]);
     }
-    
     template <class Scalar>
     Ac<Scalar> operator *(Ac<Scalar> a, Scalar d) {
         Ac<Scalar> ac;
@@ -136,22 +119,15 @@ namespace numeric {
         for (unsigned int i=0; i<a.n.size(); i++) ac.add(a.n[i]*d);
         return ac;
     }
-
     template <class Scalar>
-    Ac<Scalar> operator *(Scalar d, Ac<Scalar> a) {
-        return a*d;
-    }
-
+    Ac<Scalar> operator *(Scalar d, Ac<Scalar> a) { return a*d; }
     template <class Scalar>
     Ac<Scalar> operator *(Ac<Scalar> a, Ac<Scalar> b) {
         Ac<Scalar> ac;
-        prod(a.p, b.p, ac);
-        prod(a.n, b.p, ac);
-        prod(a.p, b.n, ac);
-        prod(a.n, b.n, ac);
+        prod(a.p, b.p, ac); prod(a.n, b.p, ac);
+        prod(a.p, b.n, ac); prod(a.n, b.n, ac);
         return ac;
     }
-
     template <class Scalar>
     Ac<Scalar> operator /(Ac<Scalar> a, Scalar d) {
         Ac<Scalar> ac;
@@ -160,7 +136,6 @@ namespace numeric {
         for (unsigned int i=0; i<a.n.size(); i++) ac.add(a.n[i]*d_inv);
         return ac;
     }
-
     template <class Scalar>
     Ac<Scalar> operator +(Ac<Scalar> a, Ac<Scalar> b) {
         Ac<Scalar> ac;
@@ -170,7 +145,6 @@ namespace numeric {
         for (unsigned int i=0; i<b.n.size(); i++) ac.n.push_back(b.n[i]);
         return ac;
     }
-
     template <class Scalar>
     Ac<Scalar> operator -(Ac<Scalar> a, Ac<Scalar> b) {
         Ac<Scalar> ac;
@@ -180,7 +154,6 @@ namespace numeric {
         for (unsigned int i=0; i<b.n.size(); i++) ac.p.push_back(-b.n[i]);
         return ac;
     }
-
     template <class Scalar>
     Ac<Scalar> operator -(Ac<Scalar> a) {
         Ac<Scalar> ac;
@@ -189,8 +162,7 @@ namespace numeric {
         return ac;
     }
 
-    
-    
+
     template<class Scalar>
     Scalar sq( Scalar x) {return x*x;}
     

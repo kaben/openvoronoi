@@ -1,4 +1,5 @@
 Running tests
+
 The Python and C++ tests can be run with CTest.  In the top-level
 build-directory either "make test" or "ctest" will run all tests.  You can
 run only tests that have e.g. "ttt" in the test-name with
@@ -8,6 +9,7 @@ or
 
 
 Notes
+
 - Currently the tests do not produce any output (png or svg output could be
   an option?)
 - The Python tests cannot be run without first calling "sudo make install".
@@ -21,6 +23,7 @@ Notes
 
 
 Adding new Python tests
+
 Python test scripts are pretty simple to write: they call "exit(0)" to
 indicate success, and "exit(-1)" to indicate failure.  Adding a new Python
 test script is also simple: place the new script beneath "src/test/", and
@@ -33,6 +36,7 @@ Don't forget to git add (I almost always forget):
 
 
 Adding new C++ tests
+
 C++ tests are also easy to write: an "int main()" function returns "0" for
 success, and "-1" for failure.  Each C++ test has its own subdirectory ending
 with "_test", which can contain any number of source files ending in ".cpp",
@@ -55,6 +59,7 @@ Don't forget to git add:
 
 
 Hints
+
 CMake and CTest have lots of tools to make testing easier, some of which are
 demonstrated in "src/test/ovd_tests.cmake" and in the CMakeLists.txt files of
 the various C++ test subdirectories.
@@ -62,3 +67,7 @@ the various C++ test subdirectories.
 To recode, rebuild, and run a single test (say, "test_sandbox"), repeat ad
 nauseum:
   $ make all test ARGS="-R test_sandbox"
+
+CTest normally suppresses test output.  If you'd like to see test output, ask
+CTest to be verbose:
+  $ make all test ARGS="-VV -R test_sandbox"
