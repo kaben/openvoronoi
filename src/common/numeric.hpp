@@ -93,13 +93,13 @@ namespace numeric {
         }
         void operator +=(const Scalar &d) { add(d); }
         void operator +=(const Ac &a) {
-            for (unsigned int i=0; i<a.p.size(); i++) p.push_back(p[i]);
-            for (unsigned int i=0; i<a.n.size(); i++) n.push_back(n[i]);
+            for (unsigned int i=0; i<a.p.size(); i++) p.push_back(a.p[i]);
+            for (unsigned int i=0; i<a.n.size(); i++) n.push_back(a.n[i]);
         }
         void operator -=(const Scalar &d) { add(-d); }
         void operator -=(const Ac &a) {
-            for (unsigned int i=0; i<a.p.size(); i++) n.push_back(-p[i]);
-            for (unsigned int i=0; i<a.n.size(); i++) p.push_back(-n[i]);
+            for (unsigned int i=0; i<a.p.size(); i++) n.push_back(-a.p[i]);
+            for (unsigned int i=0; i<a.n.size(); i++) p.push_back(-a.n[i]);
         }
         void operator =(const Scalar &d) { clear(); add(d); }
         void operator =(const Ac &a) { p = a.p; n = a.n; }
