@@ -761,6 +761,60 @@ Status test_Ac_clear() {
 }
 
 
+// Test cases to verify product().
+template <class Scalar>
+Status test_specialized_product() {
+    Status s;
+    { // Verify product() function.
+        vector<Scalar> a;
+        a.push_back(11);
+        a.push_back(-7);
+        a.push_back(2);
+        vector<Scalar> b;
+        b.push_back(3);
+        b.push_back(-13);
+        b.push_back(-5);
+        ovd::numeric::Ac<Scalar> result;
+        product(a, b, result);
+
+        // Verify result accumulator sizes.
+        check(4 == result.p.size(), s);
+        check(5 == result.n.size(), s);
+        // Verify result accumulator contents.
+        check(11*3 == result.p[0], s);
+        check(11*(-13) == result.n[0], s);
+        check(11*(-5) == result.n[1], s);
+        check((-7)*3 == result.n[2], s);
+        check((-7)*(-13) == result.p[1], s);
+        check((-7)*(-5) == result.p[2], s);
+        check(2*3 == result.p[3], s);
+        check(2*(-13) == result.n[3], s);
+        check(2*(-5) == result.n[4], s);
+
+        // Verify "a" is unaltered.
+        check(3 == a.size(), s);
+        check(11 == a[0], s);
+        check(-7 == a[1], s);
+        check(2 == a[2], s);
+
+        // Verify "b" is unaltered.
+        check(3 == b.size(), s);
+        check(3 == b[0], s);
+        check(-13 == b[1], s);
+        check(-5 == b[2], s);
+    }
+    return s;
+}
+Status test_product() {
+    Status s;
+    s += test_specialized_product<float>();
+    s += test_specialized_product<double>();
+    s += test_specialized_product<long double>();
+    s += test_specialized_product<qd_real>();
+    return s;
+}
+
+
 // Brainstorming...
 template <class Scalar>
 Status limits() {
@@ -848,6 +902,7 @@ int main(int argc, char **argv) {
     s += test_Ac_Ac_assignment();
     s += test_Ac_scalar_assignment();
     s += test_Ac_clear();
+    s += test_product();
     s += brainstorm();
     // Say how many checks were performed, and how many failed.
     cout << s.cases << " checks, " << s.errors << " errors." << endl;

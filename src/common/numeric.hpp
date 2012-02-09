@@ -105,8 +105,16 @@ namespace numeric {
         void operator =(const Ac &a) { p = a.p; n = a.n; }
     };
 
+    // For vectors "a" and "b", distributes multiplication of a and b,
+    // storing the result in "result". Please make sure to clear() result
+    // before using product().
+    // 
+    // To make this description a little less-opaque: after calling
+    // product(a, b, result), result will "equal" a * b.  Like a and b,
+    // result uses accumulator vectors to store intermediate results that
+    // will be summed sometime later.
     template <class Scalar>
-    void prod(std::vector<Scalar> &a, std::vector<Scalar> &b, Ac<Scalar> &result) {
+    void product(std::vector<Scalar> &a, std::vector<Scalar> &b, Ac<Scalar> &result) {
         for (unsigned int i=0; i<a.size(); i++)
             for (unsigned int j=0; j<b.size(); j++)
                 result.add(a[i]*b[j]);
@@ -123,8 +131,8 @@ namespace numeric {
     template <class Scalar>
     Ac<Scalar> operator *(Ac<Scalar> a, Ac<Scalar> b) {
         Ac<Scalar> ac;
-        prod(a.p, b.p, ac); prod(a.n, b.p, ac);
-        prod(a.p, b.n, ac); prod(a.n, b.n, ac);
+        product(a.p, b.p, ac); product(a.n, b.p, ac);
+        product(a.p, b.n, ac); product(a.n, b.n, ac);
         return ac;
     }
     template <class Scalar>
