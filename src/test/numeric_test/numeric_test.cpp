@@ -939,6 +939,49 @@ Status test_operator_star_Ac_Ac() {
 }
 
 
+// Test cases to verify operator/(Ac<T>&, T).
+//
+// This is a rather twitchy test. Note that Scalar(-7)/Scalar(3) can give a
+// slightly different result compared to Scalar(-7)*(1./Scalar(3)) or
+// Scalar(-7)*Scalar(1./Scalar(3)).
+//
+// TODO: After we have implemented error estimation, we should alter this to
+// check for almost-equality.
+template <class Scalar>
+Status test_specialized_operator_slash_Ac_T() {
+    Status s;
+    {
+        ovd::numeric::Ac<Scalar> a;
+        a.add(11);
+        a.add(-7);
+        a.add(2);
+        ovd::numeric::Ac<Scalar> result = a/Scalar(3);
+        // Verify result accumulator sizes.
+        check(2 == result.p.size(), s);
+        check(1 == result.n.size(), s);
+        // Verify result accumulator contents.
+        check(Scalar(11)*Scalar(1./Scalar(3)) == result.p[0], s);
+        check(Scalar(2)*Scalar(1./Scalar(3)) == result.p[1], s);
+        check(Scalar(-7)*Scalar(1./Scalar(3)) == result.n[0], s);
+        // Verify "a" is unaltered.
+        check(2 == a.p.size(), s);
+        check(1 == a.n.size(), s);
+        check(11 == a.p[0], s);
+        check(-7 == a.n[0], s);
+        check(2 == a.p[1], s);
+    }
+    return s;
+}
+Status test_operator_slash_Ac_T() {
+    Status s;
+    s += test_specialized_operator_slash_Ac_T<float>();
+    s += test_specialized_operator_slash_Ac_T<double>();
+    s += test_specialized_operator_slash_Ac_T<long double>();
+    s += test_specialized_operator_slash_Ac_T<qd_real>();
+    return s;
+}
+
+
 // Brainstorming...
 template <class Scalar>
 Status limits() {
@@ -1030,6 +1073,7 @@ int main(int argc, char **argv) {
     s += test_operator_star_Ac_T();
     s += test_operator_star_T_Ac();
     s += test_operator_star_Ac_Ac();
+    s += test_operator_slash_Ac_T();
     s += brainstorm();
     // Say how many checks were performed, and how many failed.
     cout << s.cases << " checks, " << s.errors << " errors." << endl;

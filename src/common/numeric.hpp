@@ -138,11 +138,17 @@ namespace numeric {
     template <class Scalar>
     Ac<Scalar> operator /(Ac<Scalar> a, Scalar d) {
         Ac<Scalar> ac;
-        Scalar d_inv(1./d);
+        Scalar d_inv(Scalar(1.)/d);
         for (unsigned int i=0; i<a.p.size(); i++) ac.add(a.p[i]*d_inv);
         for (unsigned int i=0; i<a.n.size(); i++) ac.add(a.n[i]*d_inv);
         return ac;
     }
+    // Note: I'm holding-off implementation of operator /(Ac, Ac) until we
+    // add error estimation to class Ac.
+    /*
+    template <class Scalar>
+    Ac<Scalar> operator /(Ac<Scalar> a, Ac<Scalar> d);
+    */
     template <class Scalar>
     Ac<Scalar> operator +(Ac<Scalar> a, Ac<Scalar> b) {
         Ac<Scalar> ac;
