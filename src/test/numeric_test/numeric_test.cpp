@@ -815,6 +815,41 @@ Status test_product() {
 }
 
 
+// Test cases to verify operator*(Ac<T>&, T).
+template <class Scalar>
+Status test_specialized_operator_star_Ac_T() {
+    Status s;
+    {
+        ovd::numeric::Ac<Scalar> a;
+        a.add(11);
+        a.add(-7);
+        a.add(2);
+        ovd::numeric::Ac<Scalar> result = a*Scalar(3);
+        // Verify result accumulator sizes.
+        check(2 == result.p.size(), s);
+        check(1 == result.n.size(), s);
+        // Verify result accumulator contents.
+        check(11*3 == result.p[0], s);
+        check((-7)*3 == result.n[0], s);
+        check(2*3 == result.p[1], s);
+        // Verify "a" is unaltered.
+        check(3 == a.p.size(), s);
+        check(11 == a.p[0], s);
+        check(-7 == a.n[0], s);
+        check(2 == a.p[1], s);
+    }
+    return s;
+}
+Status test_operator_star_Ac_T() {
+    Status s;
+    s += test_specialized_operator_star_Ac_T<float>();
+    s += test_specialized_operator_star_Ac_T<double>();
+    s += test_specialized_operator_star_Ac_T<long double>();
+    s += test_specialized_operator_star_Ac_T<qd_real>();
+    return s;
+}
+
+
 // Brainstorming...
 template <class Scalar>
 Status limits() {
@@ -903,6 +938,7 @@ int main(int argc, char **argv) {
     s += test_Ac_scalar_assignment();
     s += test_Ac_clear();
     s += test_product();
+    s += test_operator_star_Ac_T();
     s += brainstorm();
     // Say how many checks were performed, and how many failed.
     cout << s.cases << " checks, " << s.errors << " errors." << endl;
