@@ -35,7 +35,7 @@ void Status::operator +=(const Status& s) {
 }
 
 
-// Test cases to verify adding things to the accumulator.
+// Test cases to verify adding things.
 template <class Scalar>
 Status test_specialized_Ac_add() {
     Status s;
@@ -68,24 +68,118 @@ Status test_Ac_add() {
 }
 
 
-// A testing-addition policy to verify order of summation in accumulator
-// class.
+// Test cases to verify adding Scalar via +=.
+template <class Scalar>
+Status test_specialized_Ac_scalar_plus_eq() {
+    Status s;
+    { // Verify behavior when adding positive scalar.
+        ovd::numeric::Ac<Scalar> a;
+        a+=3;
+        // Verify accumulator sizes.
+        check(1 == a.p.size(), s);
+        check(0 == a.n.size(), s);
+        // Verify positive accumulator was used.
+        check(3 == a.p[0], s);
+    }{ // Verify behavior when adding negative scalar.
+        ovd::numeric::Ac<Scalar> a;
+        a+=-3;
+        // Verify accumulator sizes.
+        check(0 == a.p.size(), s);
+        check(1 == a.n.size(), s);
+        // Verify negative accumulator was used.
+        check(-3 == a.n[0], s);
+    }
+    return s;
+}
+Status test_Ac_scalar_plus_eq() {
+    Status s;
+    s += test_specialized_Ac_scalar_plus_eq<float>();
+    s += test_specialized_Ac_scalar_plus_eq<double>();
+    s += test_specialized_Ac_scalar_plus_eq<long double>();
+    s += test_specialized_Ac_scalar_plus_eq<qd_real>();
+    return s;
+}
+
+// Test cases to verify adding Ac via +=.
+template <class Scalar>
+Status test_specialized_Ac_Ac_plus_eq() {
+    Status s;
+    { // Verify behavior when adding positive Ac.
+        ovd::numeric::Ac<Scalar> a;
+        ovd::numeric::Ac<Scalar> b(3);
+        a+=b;
+        // Verify accumulator sizes.
+        check(1 == a.p.size(), s);
+        check(0 == a.n.size(), s);
+        // Verify positive accumulator was used.
+        check(3 == a.p[0], s);
+    }{ // Verify behavior when adding negative Ac.
+        ovd::numeric::Ac<Scalar> a;
+        ovd::numeric::Ac<Scalar> b(-3);
+        a+=b;
+        // Verify accumulator sizes.
+        check(0 == a.p.size(), s);
+        check(1 == a.n.size(), s);
+        // Verify negative accumulator was used.
+        check(-3 == a.n[0], s);
+    }
+    return s;
+}
+Status test_Ac_Ac_plus_eq() {
+    Status s;
+    s += test_specialized_Ac_Ac_plus_eq<float>();
+    s += test_specialized_Ac_Ac_plus_eq<double>();
+    s += test_specialized_Ac_Ac_plus_eq<long double>();
+    s += test_specialized_Ac_Ac_plus_eq<qd_real>();
+    return s;
+}
+
+
+// Test cases to verify adding via -=.
+template <class Scalar>
+Status test_specialized_Ac_scalar_minus_eq() {
+    Status s;
+    { // Verify behavior when adding positive scalar.
+        ovd::numeric::Ac<Scalar> a;
+        a-=-3;
+        // Verify accumulator sizes.
+        check(1 == a.p.size(), s);
+        check(0 == a.n.size(), s);
+        // Verify positive accumulator was used.
+        check(3 == a.p[0], s);
+    }{ // Verify behavior when adding negative scalar.
+        ovd::numeric::Ac<Scalar> a;
+        a-=3;
+        // Verify accumulator sizes.
+        check(0 == a.p.size(), s);
+        check(1 == a.n.size(), s);
+        // Verify negative accumulator was used.
+        check(-3 == a.n[0], s);
+    }
+    return s;
+}
+Status test_Ac_scalar_minus_eq() {
+    Status s;
+    s += test_specialized_Ac_scalar_minus_eq<float>();
+    s += test_specialized_Ac_scalar_minus_eq<double>();
+    s += test_specialized_Ac_scalar_minus_eq<long double>();
+    s += test_specialized_Ac_scalar_minus_eq<qd_real>();
+    return s;
+}
+
+
+// A testing-addition policy to verify order of summation.
 template <class T>
 struct MonitorSummation {
-    std::vector<T> plus_operands;
     std::vector<T> plus_eq_operands;
-    T plus(const T& a, const T& b) {
-        plus_operands.push_back(a);
-        plus_operands.push_back(b);
-        return a + b;
-    }
     void plus_eq(T& a, const T& b) {
         plus_eq_operands.push_back(a);
         plus_eq_operands.push_back(b);
         a += b;
     }
 };
-// Test cases to verify accumulator summation.
+
+// Test cases to verify summation.
 template <class Scalar>
 Status test_specialized_Ac_sum() {
     Status s;
@@ -98,29 +192,11 @@ Status test_specialized_Ac_sum() {
         check(1 == a.p.size(), s);
         check(0 == a.n.size(), s);
         check(3 == a.p[0], s);
-        // Verify split sum.
-        Scalar pos, neg;
-        a.sum(pos, neg);
-        check(3 == pos, s);
-        check(0 == neg, s);
-        // Verify accumulators contents are unchanged.
-        check(1 == a.p.size(), s);
-        check(0 == a.n.size(), s);
-        check(3 == a.p[0], s);
     }{ // Verify behavior when adding negative scalar.
         ovd::numeric::Ac<Scalar> a;
         a.add(-3);
         // Verify sum.
         check(-3 == a.sum(), s);
-        // Verify accumulators contents are unchanged.
-        check(0 == a.p.size(), s);
-        check(1 == a.n.size(), s);
-        check(-3 == a.n[0], s);
-        // Verify split sum.
-        Scalar pos, neg;
-        a.sum(pos, neg);
-        check(0 == pos, s);
-        check(-3 == neg, s);
         // Verify accumulators contents are unchanged.
         check(0 == a.p.size(), s);
         check(1 == a.n.size(), s);
@@ -136,32 +212,12 @@ Status test_specialized_Ac_sum() {
         check(1 == a.n.size(), s);
         check(3 == a.p[0], s);
         check(-3 == a.n[0], s);
-        // Verify split sum.
-        Scalar pos, neg;
-        a.sum(pos, neg);
-        check(3 == pos, s);
-        check(-3 == neg, s);
-        // Verify accumulators contents are unchanged.
-        check(1 == a.p.size(), s);
-        check(1 == a.n.size(), s);
-        check(3 == a.p[0], s);
-        check(-3 == a.n[0], s);
     }{ // Verify behavior when adding negative then positive.
         ovd::numeric::Ac<Scalar> a;
         a.add(-3);
         a.add(3);
         // Verify sum.
         check(0 == a.sum(), s);
-        // Verify accumulators contents are unchanged.
-        check(1 == a.p.size(), s);
-        check(1 == a.n.size(), s);
-        check(3 == a.p[0], s);
-        check(-3 == a.n[0], s);
-        // Verify split sum.
-        Scalar pos, neg;
-        a.sum(pos, neg);
-        check(3 == pos, s);
-        check(-3 == neg, s);
         // Verify accumulators contents are unchanged.
         check(1 == a.p.size(), s);
         check(1 == a.n.size(), s);
@@ -179,27 +235,6 @@ Status test_specialized_Ac_sum() {
         // Verify sum.
         check(8 == a.sum(), s);
         // Verify order of summation.
-        check(0 == a.plus_operands.size(), s);
-        check(4 == a.plus_eq_operands.size(), s);
-        check(0 == a.plus_eq_operands[0], s);
-        check(3 == a.plus_eq_operands[1], s);
-        check(3 == a.plus_eq_operands[2], s);
-        check(5 == a.plus_eq_operands[3], s);
-        // Verify accumulator sizes are unchanged.
-        check(2 == a.p.size(), s);
-        check(0 == a.n.size(), s);
-        // Verify accumulators contents are sorted.
-        check(3 == a.p[0], s);
-        check(5 == a.p[1], s);
-        // Verify split sum.
-        a.plus_operands.clear();
-        a.plus_eq_operands.clear();
-        Scalar pos, neg;
-        a.sum(pos, neg);
-        check(8 == pos, s);
-        check(0 == neg, s);
-        // Verify order of summation.
-        check(0 == a.plus_operands.size(), s);
         check(4 == a.plus_eq_operands.size(), s);
         check(0 == a.plus_eq_operands[0], s);
         check(3 == a.plus_eq_operands[1], s);
@@ -223,27 +258,6 @@ Status test_specialized_Ac_sum() {
         // Verify sum.
         check(-8 == a.sum(), s);
         // Verify order of summation.
-        check(0 == a.plus_operands.size(), s);
-        check(4 == a.plus_eq_operands.size(), s);
-        check(0 == a.plus_eq_operands[0], s);
-        check(-3 == a.plus_eq_operands[1], s);
-        check(-3 == a.plus_eq_operands[2], s);
-        check(-5 == a.plus_eq_operands[3], s);
-        // Verify accumulator sizes are unchanged.
-        check(0 == a.p.size(), s);
-        check(2 == a.n.size(), s);
-        // Verify accumulators contents are sorted.
-        check(-3 == a.n[0], s);
-        check(-5 == a.n[1], s);
-        // Verify split sum.
-        a.plus_operands.clear();
-        a.plus_eq_operands.clear();
-        Scalar pos, neg;
-        a.sum(pos, neg);
-        check(0 == pos, s);
-        check(-8 == neg, s);
-        // Verify order of summation.
-        check(0 == a.plus_operands.size(), s);
         check(4 == a.plus_eq_operands.size(), s);
         check(0 == a.plus_eq_operands[0], s);
         check(-3 == a.plus_eq_operands[1], s);
@@ -275,39 +289,6 @@ Status test_specialized_Ac_sum() {
         // Verify sum.
         check(1 == a.sum(), s);
         // Verify order of summation.
-        check(0 == a.plus_operands.size(), s);
-        check(12 == a.plus_eq_operands.size(), s);
-        check(0 == a.plus_eq_operands[0], s);
-        check(3 == a.plus_eq_operands[1], s);
-        check(3 == a.plus_eq_operands[2], s);
-        check(7 == a.plus_eq_operands[3], s);
-        check(10 == a.plus_eq_operands[4], s);
-        check(11 == a.plus_eq_operands[5], s);
-        check(0 == a.plus_eq_operands[6], s);
-        check(-2 == a.plus_eq_operands[7], s);
-        check(-2 == a.plus_eq_operands[8], s);
-        check(-5 == a.plus_eq_operands[9], s);
-        check(-7 == a.plus_eq_operands[10], s);
-        check(-13 == a.plus_eq_operands[11], s);
-        // Verify accumulator sizes are unchanged.
-        check(3 == a.p.size(), s);
-        check(3 == a.n.size(), s);
-        // Verify accumulators contents are sorted.
-        check(3 == a.p[0], s);
-        check(7 == a.p[1], s);
-        check(11 == a.p[2], s);
-        check(-2 == a.n[0], s);
-        check(-5 == a.n[1], s);
-        check(-13 == a.n[2], s);
-        // Verify split sum.
-        a.plus_operands.clear();
-        a.plus_eq_operands.clear();
-        Scalar pos, neg;
-        a.sum(pos, neg);
-        check(21 == pos, s);
-        check(-20 == neg, s);
-        // Verify order of summation.
-        check(0 == a.plus_operands.size(), s);
         check(12 == a.plus_eq_operands.size(), s);
         check(0 == a.plus_eq_operands[0], s);
         check(3 == a.plus_eq_operands[1], s);
@@ -343,8 +324,177 @@ Status test_Ac_sum() {
     return s;
 }
 
+// Test cases to verify split summation.
+template <class Scalar>
+Status test_specialized_Ac_split_sum() {
+    Status s;
+    { // Verify behavior when adding positive scalar.
+        ovd::numeric::Ac<Scalar> a;
+        a.add(3);
+        // Verify split sum.
+        Scalar pos, neg;
+        a.sum(pos, neg);
+        check(3 == pos, s);
+        check(0 == neg, s);
+        // Verify accumulators contents are unchanged.
+        check(1 == a.p.size(), s);
+        check(0 == a.n.size(), s);
+        check(3 == a.p[0], s);
+    }{ // Verify behavior when adding negative scalar.
+        ovd::numeric::Ac<Scalar> a;
+        a.add(-3);
+        // Verify split sum.
+        Scalar pos, neg;
+        a.sum(pos, neg);
+        check(0 == pos, s);
+        check(-3 == neg, s);
+        // Verify accumulators contents are unchanged.
+        check(0 == a.p.size(), s);
+        check(1 == a.n.size(), s);
+        check(-3 == a.n[0], s);
+    }{ // Verify behavior when adding positive then negative.
+        ovd::numeric::Ac<Scalar> a;
+        a.add(3);
+        a.add(-3);
+        // Verify split sum.
+        Scalar pos, neg;
+        a.sum(pos, neg);
+        check(3 == pos, s);
+        check(-3 == neg, s);
+        // Verify accumulators contents are unchanged.
+        check(1 == a.p.size(), s);
+        check(1 == a.n.size(), s);
+        check(3 == a.p[0], s);
+        check(-3 == a.n[0], s);
+    }{ // Verify behavior when adding negative then positive.
+        ovd::numeric::Ac<Scalar> a;
+        a.add(-3);
+        a.add(3);
+        // Verify split sum.
+        Scalar pos, neg;
+        a.sum(pos, neg);
+        check(3 == pos, s);
+        check(-3 == neg, s);
+        // Verify accumulators contents are unchanged.
+        check(1 == a.p.size(), s);
+        check(1 == a.n.size(), s);
+        check(3 == a.p[0], s);
+        check(-3 == a.n[0], s);
+    }{ // Verify behavior when adding two positives.
+        ovd::numeric::Ac<Scalar, MonitorSummation> a;
+        a.add(5);
+        a.add(3);
+        // Verify accumulator sizes and contents.
+        check(2 == a.p.size(), s);
+        check(0 == a.n.size(), s);
+        check(5 == a.p[0], s);
+        check(3 == a.p[1], s);
+        // Verify split sum.
+        a.plus_eq_operands.clear();
+        Scalar pos, neg;
+        a.sum(pos, neg);
+        check(8 == pos, s);
+        check(0 == neg, s);
+        // Verify order of summation.
+        check(4 == a.plus_eq_operands.size(), s);
+        check(0 == a.plus_eq_operands[0], s);
+        check(3 == a.plus_eq_operands[1], s);
+        check(3 == a.plus_eq_operands[2], s);
+        check(5 == a.plus_eq_operands[3], s);
+        // Verify accumulator sizes are unchanged.
+        check(2 == a.p.size(), s);
+        check(0 == a.n.size(), s);
+        // Verify accumulators contents are sorted.
+        check(3 == a.p[0], s);
+        check(5 == a.p[1], s);
+    }{ // Verify behavior when adding two positives.
+        ovd::numeric::Ac<Scalar, MonitorSummation> a;
+        a.add(-5);
+        a.add(-3);
+        // Verify accumulator sizes and contents.
+        check(0 == a.p.size(), s);
+        check(2 == a.n.size(), s);
+        check(-5 == a.n[0], s);
+        check(-3 == a.n[1], s);
+        // Verify split sum.
+        a.plus_eq_operands.clear();
+        Scalar pos, neg;
+        a.sum(pos, neg);
+        check(0 == pos, s);
+        check(-8 == neg, s);
+        // Verify order of summation.
+        check(4 == a.plus_eq_operands.size(), s);
+        check(0 == a.plus_eq_operands[0], s);
+        check(-3 == a.plus_eq_operands[1], s);
+        check(-3 == a.plus_eq_operands[2], s);
+        check(-5 == a.plus_eq_operands[3], s);
+        // Verify accumulator sizes are unchanged.
+        check(0 == a.p.size(), s);
+        check(2 == a.n.size(), s);
+        // Verify accumulators contents are sorted.
+        check(-3 == a.n[0], s);
+        check(-5 == a.n[1], s);
+    }{ // Verify behavior when adding positives and negatives in funky order.
+        ovd::numeric::Ac<Scalar, MonitorSummation> a;
+        a.add(-5);
+        a.add(7);
+        a.add(3);
+        a.add(-13);
+        a.add(11);
+        a.add(-2);
+        // Verify accumulator sizes and contents.
+        check(3 == a.p.size(), s);
+        check(3 == a.n.size(), s);
+        check(7 == a.p[0], s);
+        check(3 == a.p[1], s);
+        check(11 == a.p[2], s);
+        check(-5 == a.n[0], s);
+        check(-13 == a.n[1], s);
+        check(-2 == a.n[2], s);
+        // Verify split sum.
+        a.plus_eq_operands.clear();
+        Scalar pos, neg;
+        a.sum(pos, neg);
+        check(21 == pos, s);
+        check(-20 == neg, s);
+        // Verify order of summation.
+        check(12 == a.plus_eq_operands.size(), s);
+        check(0 == a.plus_eq_operands[0], s);
+        check(3 == a.plus_eq_operands[1], s);
+        check(3 == a.plus_eq_operands[2], s);
+        check(7 == a.plus_eq_operands[3], s);
+        check(10 == a.plus_eq_operands[4], s);
+        check(11 == a.plus_eq_operands[5], s);
+        check(0 == a.plus_eq_operands[6], s);
+        check(-2 == a.plus_eq_operands[7], s);
+        check(-2 == a.plus_eq_operands[8], s);
+        check(-5 == a.plus_eq_operands[9], s);
+        check(-7 == a.plus_eq_operands[10], s);
+        check(-13 == a.plus_eq_operands[11], s);
+        // Verify accumulator sizes are unchanged.
+        check(3 == a.p.size(), s);
+        check(3 == a.n.size(), s);
+        // Verify accumulators contents are sorted.
+        check(3 == a.p[0], s);
+        check(7 == a.p[1], s);
+        check(11 == a.p[2], s);
+        check(-2 == a.n[0], s);
+        check(-5 == a.n[1], s);
+        check(-13 == a.n[2], s);
+    }
+    return s;
+}
+Status test_Ac_split_sum() {
+    Status s;
+    s += test_specialized_Ac_split_sum<float>();
+    s += test_specialized_Ac_split_sum<double>();
+    s += test_specialized_Ac_split_sum<long double>();
+    s += test_specialized_Ac_split_sum<qd_real>();
+    return s;
+}
 
-// Test cases to verify accumulator constructors.
+
+// Test cases to verify constructors.
 template <class Scalar>
 Status test_specialized_Ac_constructors() {
     Status s;
@@ -367,7 +517,6 @@ Status test_specialized_Ac_constructors() {
         check(-7 == b.n[0], s);
         check(-13 == b.n[1], s);
         check(-5 == b.n[2], s);
-
     }{ // Verify empty constructor.
         ovd::numeric::Ac<Scalar> a;
         // Verify accumulator sizes.
@@ -458,6 +607,96 @@ Status test_Ac_constructors() {
 }
 
 
+// Test cases to verify assignment operator.
+template <class Scalar>
+Status test_specialized_Ac_Ac_assignment() {
+    Status s;
+    { // Verify copy constructor.
+        ovd::numeric::Ac<Scalar> a;
+        a.p.push_back(11);
+        a.p.push_back(2);
+        a.p.push_back(3);
+        a.n.push_back(-7);
+        a.n.push_back(-13);
+        a.n.push_back(-5);
+        ovd::numeric::Ac<Scalar> b = a;
+        // Verify accumulator sizes.
+        check(3 == b.p.size(), s);
+        check(3 == b.n.size(), s);
+        // Verify accumulator contents.
+        check(11 == b.p[0], s);
+        check(2 == b.p[1], s);
+        check(3 == b.p[2], s);
+        check(-7 == b.n[0], s);
+        check(-13 == b.n[1], s);
+        check(-5 == b.n[2], s);
+    }
+    return s;
+}
+Status test_Ac_Ac_assignment() {
+    Status s;
+    s += test_specialized_Ac_Ac_assignment<float>();
+    s += test_specialized_Ac_Ac_assignment<double>();
+    s += test_specialized_Ac_Ac_assignment<long double>();
+    s += test_specialized_Ac_Ac_assignment<qd_real>();
+    return s;
+}
+
+
+// Test cases to verify clear().
+template <class Scalar>
+Status test_specialized_Ac_clear() {
+    Status s;
+    { // Verify clear() method.
+        ovd::numeric::Ac<Scalar> a;
+        a.p.push_back(11);
+        a.p.push_back(2);
+        a.p.push_back(3);
+        a.n.push_back(-7);
+        a.n.push_back(-13);
+        a.n.push_back(-5);
+        a.clear();
+        // Verify accumulator sizes.
+        check(0 == a.p.size(), s);
+        check(0 == a.n.size(), s);
+        // Verify summation.
+        Scalar pos, neg;
+        a.sum(pos, neg);
+        check(0 == pos, s);
+        check(0 == pos, s);
+    }
+    { // Verify no summation operations after clear() method.
+        ovd::numeric::Ac<Scalar, MonitorSummation> a;
+        a.p.push_back(11);
+        a.p.push_back(2);
+        a.p.push_back(3);
+        a.n.push_back(-7);
+        a.n.push_back(-13);
+        a.n.push_back(-5);
+        a.clear();
+        // Verify accumulator sizes.
+        check(0 == a.p.size(), s);
+        check(0 == a.n.size(), s);
+        // Verify no operations upon summation.
+        a.sum();
+        check(0 == a.plus_eq_operands.size(), s);
+        // Verify no operations upon split summation.
+        Scalar pos, neg;
+        a.sum(pos, neg);
+        check(0 == a.plus_eq_operands.size(), s);
+    }
+    return s;
+}
+Status test_Ac_clear() {
+    Status s;
+    s += test_specialized_Ac_Ac_assignment<float>();
+    s += test_specialized_Ac_Ac_assignment<double>();
+    s += test_specialized_Ac_Ac_assignment<long double>();
+    s += test_specialized_Ac_Ac_assignment<qd_real>();
+    return s;
+}
+
+
 // Brainstorming...
 template <class Scalar>
 Status limits() {
@@ -535,8 +774,13 @@ int main(int argc, char **argv) {
     Status s;
     std::cout << ovd::version() << "\n"; // the git revision-string
     s += test_Ac_add();
+    s += test_Ac_scalar_plus_eq();
+    s += test_Ac_Ac_plus_eq();
+    s += test_Ac_scalar_minus_eq();
     s += test_Ac_sum();
+    s += test_Ac_split_sum();
     s += test_Ac_constructors();
+    s += test_Ac_Ac_assignment();
     s += brainstorm();
     // Say how many checks were performed, and how many failed.
     cout << s.cases << " checks, " << s.errors << " errors." << endl;

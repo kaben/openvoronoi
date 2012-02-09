@@ -43,7 +43,6 @@ namespace numeric {
     // summation.
     template <class T>
     struct SimpleAdd {
-        T plus(const T& a, const T& b) { return a + b; }
         void plus_eq(T& a, const T& b) { a += b; }
     };
 
